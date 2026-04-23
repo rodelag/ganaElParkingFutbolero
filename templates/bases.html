@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Bases del Concurso - Parkin Futbolero{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-xl p-8 sm:p-12 border border-gray-100">
+        <div class="text-center mb-10">
+            <div class="flex justify-center mb-4">
+                <img src="{{ url_for('static', filename='images/logo75.png') }}" alt="Rodelag" class="h-16 w-auto rounded-xl shadow">
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 mb-4">Bases del Concurso</h1>
+            <p class="text-rodelag font-bold text-lg">GANA EL PARKIN FUTBOLERO</p>
+            <p class="text-gray-500 mt-2">Vigencia: 30 de abril al 30 de junio de 2026</p>
+        </div>
+
+        <div class="space-y-8 text-gray-700">
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">1</span>
+                    Mecánica
+                </h2>
+                <ul class="list-disc list-inside space-y-2 ml-2">
+                    <li>Por cada <strong>B/.100.00</strong> en compras antes de ITBMS realizadas en <strong>Rodelag</strong> o <strong>Rodelag.com</strong> de las marcas <strong>LG, Sankey, Mystic, RCA, Hisense, Samsung</strong>, el cliente acumula <strong>1 boleto electrónico</strong>.</li>
+                    <li><span class="text-rodelag font-bold">Beneficio Crédito de Una:</span> Por cada B/.100 pagados con Crédito de Una, el cliente acumula el <strong>doble de boletos</strong> (2 boletos por cada B/.100.00).</li>
+                    <li>El cliente deberá registrar su factura en: <strong>parkingfutbolero.rodelag.com</strong></li>
+                    <li>Una vez registrada la factura, el cliente recibirá un correo de confirmación.</li>
+                    <li>El cliente debe conservar su factura original y documento de identidad para validación.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">2</span>
+                    Cálculo de Boletos
+                </h2>
+                <p class="mb-3">Los boletos se asignan por múltiplos completos de B/.100.00 en una misma factura:</p>
+                <div class="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                    <p><strong>Factura B/.99.99</strong> = 0 boletos</p>
+                    <p><strong>Factura B/.100.00</strong> = 1 boleto</p>
+                    <p><strong>Factura B/.199.99</strong> = 1 boleto</p>
+                    <p><strong>Factura B/.200.00</strong> = 2 boletos</p>
+                    <p class="text-rodelag font-semibold mt-2">Con Crédito de Una: Factura B/.200.00 = 4 boletos</p>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">3</span>
+                    Sorteos
+                </h2>
+                <div class="space-y-4">
+                    <div class="border border-gray-200 rounded-xl p-5">
+                        <h3 class="font-bold text-gray-900 mb-2">Sorteo 1 - 2 de junio de 2026</h3>
+                        <p class="text-sm text-gray-600 mb-3">4 ganadores asignados:</p>
+                        <ul class="text-sm space-y-1">
+                            <li><strong>13 de junio</strong> - Brasil vs Marruecos (LG)</li>
+                            <li><strong>17 de junio</strong> - Panamá vs Ghana (Hisense)</li>
+                            <li><strong>23 de junio</strong> - Panamá vs Croacia (Sankey)</li>
+                            <li><strong>27 de junio</strong> - Panamá vs Inglaterra (Mystic)</li>
+                        </ul>
+                    </div>
+                    <div class="border border-gray-200 rounded-xl p-5">
+                        <h3 class="font-bold text-gray-900 mb-2">Sorteo 2 - 3 de julio de 2026</h3>
+                        <p class="text-sm text-gray-600 mb-3">5 ganadores asignados:</p>
+                        <ul class="text-sm space-y-1">
+                            <li><strong>18 de julio</strong> - Semifinal (Samsung)</li>
+                            <li><strong>19 de julio</strong> - La Final (RCA)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">4</span>
+                    Premios - Parkin Futbolero
+                </h2>
+                <p class="mb-3">Cada premio incluye:</p>
+                <ul class="list-disc list-inside space-y-2 ml-2">
+                    <li>1 televisor de la marca patrocinadora</li>
+                    <li>Producción de "Parkin Futbolero" para el ganador y hasta <strong>11 invitados</strong>:</li>
+                    <ul class="list-circle list-inside ml-4 text-sm text-gray-600">
+                        <li>Comida (carne, pollo, chorizo, hamburguesas, mazorcas, arepas, yuca)</li>
+                        <li>Cooler con cervezas, aguas y sodas</li>
+                        <li>DJ</li>
+                        <li>Ambientación temática de fútbol</li>
+                    </ul>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">5</span>
+                    Elegibilidad
+                </h2>
+                <p class="mb-2"><strong>Pueden participar:</strong> Panameños, residentes y extranjeros con cédula E o pasaporte vigente.</p>
+                <p><strong>No pueden participar:</strong></p>
+                <ul class="list-disc list-inside ml-2 text-sm">
+                    <li>Menores de edad</li>
+                    <li>Empresas / personas jurídicas</li>
+                    <li>Colaboradores del Organizador y/o agencias relacionadas (Rodelag y OMD)</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">6</span>
+                    Restricciones
+                </h2>
+                <ul class="list-disc list-inside space-y-2 ml-2 text-sm">
+                    <li>Un mismo cliente solo podrá ganar <strong>una (1) vez</strong> durante todo el periodo de la promoción.</li>
+                    <li>Si un participante resulta seleccionado más de una vez en un mismo sorteo, se realizará una nueva selección.</li>
+                    <li>Cada factura solo podrá registrarse una (1) vez.</li>
+                    <li>En caso de devoluciones, anulaciones o notas de crédito, los boletos asociados podrán ser invalidados.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">7</span>
+                    Entrega del Premio
+                </h2>
+                <ul class="list-disc list-inside space-y-2 ml-2 text-sm">
+                    <li>El ganador deberá presentar cédula/pasaporte vigente y factura original registrada.</li>
+                    <li>El ganador tendrá derecho a disfrutar del parkin futbolero con 11 amigos.</li>
+                    <li>El televisor se utilizará en la fiesta y posteriormente el cliente podrá llevárselo a casa.</li>
+                    <li>Rodelag no se hará cargo del transporte del premio.</li>
+                    <li>El ganador deberá enviar la lista de sus 11 invitados 7 días antes de cada evento.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                    <span class="w-8 h-8 bg-rodelag text-white rounded-full flex items-center justify-center text-sm mr-3">8</span>
+                    Responsabilidad y Condiciones
+                </h2>
+                <ul class="list-disc list-inside space-y-2 ml-2 text-sm">
+                    <li>El premio no es transferible ni canjeable por dinero en efectivo.</li>
+                    <li>Los ganadores podrán ser grabados, publicados o filmados en pautas comerciales.</li>
+                    <li>Rodelag no se hace responsable por fallas de conectividad ni datos incorrectos suministrados.</li>
+                    <li>La participación implica la aceptación total de las presentes condiciones.</li>
+                </ul>
+            </section>
+
+            <div class="bg-gray-50 rounded-xl p-6 text-center mt-10">
+                <p class="text-sm text-gray-600">Promoción aprobada por la <strong>Junta de Control de Juegos (JCJ)</strong></p>
+                <p class="text-xs text-gray-500 mt-2">&copy; 2026 Rodelag, S.A. - Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

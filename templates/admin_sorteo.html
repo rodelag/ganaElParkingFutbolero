@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.nombre }} - Admin Parkin Futbolero{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <div class="bg-rodelagDark text-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-6">
+                    <span class="font-bold text-lg">Admin Panel</span>
+                    <a href="/admin/dashboard" class="text-sm hover:text-gold transition">Dashboard</a>
+                    <a href="/admin/facturas" class="text-sm hover:text-gold transition">Facturas</a>
+                    <a href="/admin/ganadores" class="text-sm hover:text-gold transition">Ganadores</a>
+                    <a href="/admin/sorteo?sorteo=1" class="text-sm {% if sorteo_id == 1 %}bg-white/10 px-3 py-1.5 rounded-lg{% endif %} hover:bg-white/20 transition">Sorteo 1</a>
+                    <a href="/admin/sorteo?sorteo=2" class="text-sm {% if sorteo_id == 2 %}bg-white/10 px-3 py-1.5 rounded-lg{% endif %} hover:bg-white/20 transition">Sorteo 2</a>
+                </div>
+                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <div class="inline-block mb-3 px-4 py-1 bg-gold/20 rounded-full text-gold text-sm font-bold tracking-wide uppercase border border-gold/30">
+                Tómbola Electrónica
+            </div>
+            <h1 class="text-3xl font-black text-gray-900">{{ config.nombre }}</h1>
+            <p class="text-gray-500 mt-2">Fecha: {{ config.fecha }} | Ganadores a escoger: {{ config.ganadores_a_escoger }}</p>
+        </div>
+
+        {% if premios %}
+        <div class="space-y-6" id="premiosContainer">
+            {% for premio in premios %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 card-shine" id="premio-{{ premio.id }}">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-gradient-to-br from-rodelag to-rodelagDark rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">
+                        {{ premio.id }}
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-lg">{{ premio.tv }}</h3>
+                        <p class="text-sm text-gray-500">{{ premio.partido }} - {{ premio.fecha_fiesta }}</p>
+                        <p class="text-xs text-rodelag font-semibold mt-1">Marca: {{ premio.marca }} | Valor: B/. {{ "%.2f"|format(premio.valor) }}</p>
+                    </div>
+                </div>
+                <button onclick="realizarSorteo({{ sorteo_id }}, {{ premio.id }})" class="bg-futbol hover:bg-futbolLight text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-futbol/20 transition transform hover:scale-105 active:scale-95">
+                    Seleccionar Ganador
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Todos los premios han sido asignados</h2>
+            <p class="text-gray-500">No hay premios disponibles para este sorteo.</p>
+            <a href="/admin/ganadores?sorteo={{ sorteo_id }}" class="inline-block mt-6 bg-rodelag hover:bg-rodelagDark text-white font-bold px-6 py-3 rounded-xl transition">
+                Ver Ganadores
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Resultado del sorteo -->
+        <div id="resultadoSorteo" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform transition-all">
+                <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                <h2 class="text-2xl font-black text-gray-900 mb-2">¡Tenemos Ganador!</h2>
+                <div id="ganadorInfo" class="mt-6 space-y-3 text-left bg-gray-50 rounded-xl p-5">
+                </div>
+                <button onclick="cerrarResultado()" class="mt-6 w-full bg-rodelag hover:bg-rodelagDark text-white font-bold py-3 rounded-xl transition">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function realizarSorteo(sorteoId, premioId) {
+    if (!confirm('¿Está seguro de realizar el sorteo para este premio?')) return;
+    
+    const btn = document.querySelector(`#premio-${premioId} button`);
+    btn.disabled = true;
+    btn.textContent = 'Sorteando...';
+    
+    try {
+        const res = await fetch('/api/admin/realizar-sorteo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({sorteo_id: sorteoId, premio_id: premioId})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            document.getElementById('ganadorInfo').innerHTML = `
+                <div class="text-center mb-4">
+                    <div class="text-4xl font-black text-rodelag">${data.ganador.nombre}</div>
+                    <div class="text-gray-600 mt-1">Cédula: ${data.ganador.cedula}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Teléfono</div>
+                        <div class="font-semibold">${data.ganador.telefono}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Boleto</div>
+                        <div class="font-mono font-bold text-rodelag">${data.ganador.boleto}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('resultadoSorteo').classList.remove('hidden');
+            document.querySelector(`#premio-${premioId}`).remove();
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.textContent = 'Seleccionar Ganador';
+        }
+    } catch (err) {
+        alert('Error al realizar el sorteo');
+        btn.disabled = false;
+        btn.textContent = 'Seleccionar Ganador';
+    }
+}
+
+function cerrarResultado() {
+    document.getElementById('resultadoSorteo').classList.add('hidden');
+}
+</script>
+{% endblock %}

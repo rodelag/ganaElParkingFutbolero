@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Facturas - Admin Parkin Futbolero{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <div class="bg-rodelagDark text-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-6">
+                    <span class="font-bold text-lg">Admin Panel</span>
+                    <a href="/admin/dashboard" class="text-sm hover:text-gold transition">Dashboard</a>
+                    <a href="/admin/facturas" class="text-sm bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition">Facturas</a>
+                    <a href="/admin/ganadores" class="text-sm hover:text-gold transition">Ganadores</a>
+                    <a href="/admin/sorteo?sorteo=1" class="text-sm hover:text-gold transition">Sorteo 1</a>
+                    <a href="/admin/sorteo?sorteo=2" class="text-sm hover:text-gold transition">Sorteo 2</a>
+                </div>
+                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Registro de Facturas</h1>
+                    <p class="text-sm text-gray-500">Total: {{ facturas|length }} facturas registradas</p>
+                </div>
+                <div class="flex gap-3">
+                    <input type="text" id="buscarFactura" placeholder="Buscar factura..." onkeyup="filtrarFacturas()" class="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-rodelag outline-none">
+                    <a href="/api/admin/exportar-facturas" class="bg-futbol hover:bg-futbolLight text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-md shadow-futbol/20">
+                        Exportar CSV
+                    </a>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left" id="tablaFacturas">
+                    <thead class="bg-rodelag/10 text-rodelagDark font-semibold uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-4"># Factura</th>
+                            <th class="px-6 py-4">Participante</th>
+                            <th class="px-6 py-4">Cédula</th>
+                            <th class="px-6 py-4">Marca</th>
+                            <th class="px-6 py-4">Monto</th>
+                            <th class="px-6 py-4">Sucursal</th>
+                            <th class="px-6 py-4">Fecha Compra</th>
+                            <th class="px-6 py-4">Boletos</th>
+                            <th class="px-6 py-4">Crédito Una</th>
+                            <th class="px-6 py-4">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for f in facturas %}
+                        <tr class="hover:bg-rodelag/5 transition">
+                            <td class="px-6 py-4 font-mono text-gray-600">{{ f.numero_factura }}</td>
+                            <td class="px-6 py-4 font-medium text-gray-900">{{ f.nombre }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ f.cedula }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 bg-rodelag/10 rounded-full text-xs font-semibold text-rodelag">{{ f.marca }}</span>
+                            </td>
+                            <td class="px-6 py-4 font-semibold">B/. {{ "%.2f"|format(f.monto) }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ f.sucursal or '-' }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ f.fecha_compra }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 bg-rodelag/10 text-rodelag rounded-full text-xs font-bold">{{ f.boletos_asignados }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if f.credito_una %}
+                                <span class="px-2.5 py-1 bg-gold/20 text-yellow-700 rounded-full text-xs font-bold">Sí</span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if f.estado == 'activa' %}
+                                <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Activa</span>
+                                {% else %}
+                                <span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Invalidada</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="10" class="px-6 py-12 text-center text-gray-500">No hay facturas registradas</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filtrarFacturas() {
+    const input = document.getElementById('buscarFactura').value.toLowerCase();
+    const rows = document.querySelectorAll('#tablaFacturas tbody tr');
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

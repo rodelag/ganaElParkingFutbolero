@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gana el Parkin Futbolero - Rodelag{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        rodelag: '#1B3A5C',
+                        rodelagDark: '#142A45',
+                        rodelagLight: '#2A4F75',
+                        futbol: '#E31937',
+                        futbolLight: '#F03A4F',
+                        gold: '#FFD700',
+                        goldDark: '#C9A000',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <nav class="bg-rodelag text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="/" class="flex items-center space-x-3">
+                    <img src="{{ url_for('static', filename='images/logo75.png') }}" alt="Rodelag" class="h-10 w-auto bg-white rounded-lg p-1">
+                    <span class="font-bold text-lg tracking-tight">Parkin Futbolero</span>
+                </a>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="/" class="hover:text-gold transition">Registrar Factura</a>
+                    <a href="/bases" class="hover:text-gold transition">Bases del Concurso</a>
+                    <a href="/admin" class="hover:text-gold transition hidden">Administración</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-rodelagDark text-white/80 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <div class="flex justify-center items-center gap-3 mb-3">
+                <img src="{{ url_for('static', filename='images/logo75.png') }}" alt="Rodelag" class="h-8 w-auto bg-white rounded p-0.5">
+                <span class="font-bold text-white">Rodelag 75 Años</span>
+            </div>
+            <p class="mb-2">&copy; 2026 Rodelag, S.A. Todos los derechos reservados.</p>
+            <p>Promoción aprobada por la JCJ. Válida del 30 de abril al 30 de junio de 2026.</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

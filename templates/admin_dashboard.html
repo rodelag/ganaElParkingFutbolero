@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin - Parkin Futbolero{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Sidebar / Nav Admin -->
+    <div class="bg-rodelagDark text-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-6">
+                    <span class="font-bold text-lg">Admin Panel</span>
+                    <a href="/admin/dashboard" class="text-sm bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition">Dashboard</a>
+                    <a href="/admin/facturas" class="text-sm hover:text-gold transition">Facturas</a>
+                    <a href="/admin/ganadores" class="text-sm hover:text-gold transition">Ganadores</a>
+                    <a href="/admin/sorteo?sorteo=1" class="text-sm hover:text-gold transition">Sorteo 1</a>
+                    <a href="/admin/sorteo?sorteo=2" class="text-sm hover:text-gold transition">Sorteo 2</a>
+                </div>
+                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Cards -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <div class="text-sm text-gray-500 font-medium">Participantes</div>
+                <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_participantes }}</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <div class="text-sm text-gray-500 font-medium">Facturas Registradas</div>
+                <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_facturas }}</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <div class="text-sm text-gray-500 font-medium">Boletos Generados</div>
+                <div class="text-3xl font-black text-rodelag mt-1">{{ stats.total_boletos }}</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <div class="text-sm text-gray-500 font-medium">Ganadores</div>
+                <div class="text-3xl font-black text-futbol mt-1">{{ stats.total_ganadores }}</div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Monto total -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <div class="text-sm text-gray-500 font-medium mb-1">Monto Total Facturado</div>
+                <div class="text-3xl font-black text-gray-900">B/. {{ "%.2f"|format(stats.monto_total) }}</div>
+                <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-rodelag rounded-full" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Sorteos info -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+                <h3 class="font-bold text-gray-900 mb-4">Próximos Sorteos</h3>
+                <div class="space-y-3">
+                    {% for id, sorteo in sorteos.items() %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div>
+                            <div class="font-bold text-gray-900">{{ sorteo.nombre }}</div>
+                            <div class="text-sm text-gray-500">{{ sorteo.fecha }} | {{ sorteo.ganadores_a_escoger }} ganadores</div>
+                        </div>
+                        <a href="/admin/sorteo?sorteo={{ id }}" class="bg-rodelag hover:bg-rodelagDark text-white text-sm font-bold px-4 py-2 rounded-lg transition shadow-md shadow-rodelag/20">
+                            Ir al Sorteo
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="mt-8 bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+            <h3 class="font-bold text-gray-900 mb-4">Acciones Rápidas</h3>
+            <div class="flex flex-wrap gap-3">
+                <a href="/admin/facturas" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-700 transition">
+                    Ver todas las facturas
+                </a>
+                <a href="/api/admin/exportar-facturas" class="inline-flex items-center px-4 py-2 bg-futbol hover:bg-futbolLight text-white rounded-lg text-sm font-semibold transition shadow-md shadow-futbol/20">
+                    Exportar Excel/CSV
+                </a>
+                <a href="/admin/ganadores" class="inline-flex items-center px-4 py-2 bg-gold hover:bg-yellow-400 text-gray-900 rounded-lg text-sm font-semibold transition shadow-md shadow-gold/20">
+                    Ver ganadores
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
