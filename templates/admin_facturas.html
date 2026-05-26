@@ -7,15 +7,32 @@
     <div class="bg-rodelagDark text-white">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-6">
-                    <span class="font-bold text-lg">Admin Panel</span>
+                <span class="font-bold text-lg">Admin Panel</span>
+
+                <!-- Desktop links -->
+                <div class="hidden md:flex items-center space-x-6">
                     <a href="/admin/dashboard" class="text-sm hover:text-gold transition">Dashboard</a>
                     <a href="/admin/facturas" class="text-sm bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition">Facturas</a>
                     <a href="/admin/ganadores" class="text-sm hover:text-gold transition">Ganadores</a>
                     <a href="/admin/sorteo?sorteo=1" class="text-sm hover:text-gold transition">Sorteo 1</a>
                     <a href="/admin/sorteo?sorteo=2" class="text-sm hover:text-gold transition">Sorteo 2</a>
+                    <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
                 </div>
-                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+
+                <!-- Mobile hamburger -->
+                <button onclick="toggleAdminMenu()" class="md:hidden text-white focus:outline-none p-2">
+                    <svg id="adminMenuIcon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+
+            <!-- Mobile menu -->
+            <div id="adminMobileMenu" class="hidden md:hidden pb-4 space-y-2">
+                <a href="/admin/dashboard" class="block text-sm px-3 py-2 hover:text-gold transition">Dashboard</a>
+                <a href="/admin/facturas" class="block text-sm bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20 transition">Facturas</a>
+                <a href="/admin/ganadores" class="block text-sm px-3 py-2 hover:text-gold transition">Ganadores</a>
+                <a href="/admin/sorteo?sorteo=1" class="block text-sm px-3 py-2 hover:text-gold transition">Sorteo 1</a>
+                <a href="/admin/sorteo?sorteo=2" class="block text-sm px-3 py-2 hover:text-gold transition">Sorteo 2</a>
+                <a href="/admin/logout" class="block text-sm text-red-300 hover:text-red-200 px-3 py-2 transition">Cerrar Sesión</a>
             </div>
         </div>
     </div>
@@ -42,13 +59,12 @@
                             <th class="px-6 py-4"># Factura</th>
                             <th class="px-6 py-4">Participante</th>
                             <th class="px-6 py-4">Cédula</th>
-                            <th class="px-6 py-4">Marca</th>
-                            <th class="px-6 py-4">Monto</th>
                             <th class="px-6 py-4">Sucursal</th>
                             <th class="px-6 py-4">Fecha Compra</th>
                             <th class="px-6 py-4">Boletos</th>
                             <th class="px-6 py-4">Crédito Una</th>
                             <th class="px-6 py-4">Estado</th>
+                            <th class="px-6 py-4">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -57,10 +73,6 @@
                             <td class="px-6 py-4 font-mono text-gray-600">{{ f.numero_factura }}</td>
                             <td class="px-6 py-4 font-medium text-gray-900">{{ f.nombre }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ f.cedula }}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2.5 py-1 bg-rodelag/10 rounded-full text-xs font-semibold text-rodelag">{{ f.marca }}</span>
-                            </td>
-                            <td class="px-6 py-4 font-semibold">B/. {{ "%.2f"|format(f.monto) }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ f.sucursal or '-' }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ f.fecha_compra }}</td>
                             <td class="px-6 py-4">
@@ -80,14 +92,69 @@
                                 <span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Invalidada</span>
                                 {% endif %}
                             </td>
+                            <td class="px-6 py-4">
+                                <button onclick="verDetalleFactura('{{ f.numero_factura }}')" 
+                                        class="text-xs font-semibold text-rodelag hover:text-rodelagDark underline">
+                                    Ver detalle
+                                </button>
+                            </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-gray-500">No hay facturas registradas</td>
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">No hay facturas registradas</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle de Factura -->
+<div id="modalDetalle" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="cerrarModal()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full max-w-lg sm:max-w-2xl mx-auto">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-lg font-semibold leading-6 text-gray-900" id="modal-title">Detalle de Factura</h3>
+                            <p class="text-sm text-gray-500 mt-1" id="modalFacturaId">—</p>
+                            
+                            <div class="mt-4">
+                                <div id="modalLoading" class="text-sm text-gray-500 py-4">Cargando productos...</div>
+                                <div id="modalContent" class="hidden">
+                                    <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                                        <thead class="bg-gray-50 text-gray-600 font-semibold">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left">Producto</th>
+                                                <th class="px-4 py-2 text-left">Marca</th>
+                                                <th class="px-4 py-2 text-right">Cant.</th>
+                                                <th class="px-4 py-2 text-right">Precio Unit.</th>
+                                                <th class="px-4 py-2 text-right">Total</th>
+                                                <th class="px-4 py-2 text-center">Aplica</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="modalProductos" class="divide-y divide-gray-100"></tbody>
+                                    </table>
+                                </div>
+                                <!-- Boletos generados -->
+                                <div id="modalBoletosSection" class="hidden mt-4">
+                                    <h4 class="text-sm font-bold text-gray-900 mb-2">Boletos generados para esta factura:</h4>
+                                    <div id="modalBoletos" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <div id="modalError" class="hidden text-sm text-red-600 py-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" onclick="cerrarModal()" class="inline-flex w-full justify-center rounded-md bg-rodelag px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rodelagDark sm:ml-3 sm:w-auto">
+                        Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -101,6 +168,88 @@ function filtrarFacturas() {
         const text = row.innerText.toLowerCase();
         row.style.display = text.includes(input) ? '' : 'none';
     });
+}
+
+async function verDetalleFactura(numeroFactura) {
+    const modal = document.getElementById('modalDetalle');
+    const loading = document.getElementById('modalLoading');
+    const content = document.getElementById('modalContent');
+    const error = document.getElementById('modalError');
+    const productosBody = document.getElementById('modalProductos');
+    const boletosSection = document.getElementById('modalBoletosSection');
+    const boletosDiv = document.getElementById('modalBoletos');
+    
+    document.getElementById('modalFacturaId').textContent = 'Factura: ' + numeroFactura;
+    modal.classList.remove('hidden');
+    loading.classList.remove('hidden');
+    content.classList.add('hidden');
+    error.classList.add('hidden');
+    boletosSection.classList.add('hidden');
+    productosBody.innerHTML = '';
+    boletosDiv.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/admin/factura-detalle/' + encodeURIComponent(numeroFactura));
+        const json = await res.json();
+
+        if (!json.success) {
+            throw new Error('Error al cargar detalle');
+        }
+
+        if (!json.productos || json.productos.length === 0) {
+            productosBody.innerHTML = '<tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">No hay productos disponibles</td></tr>';
+        } else {
+            json.productos.forEach(prod => {
+                const desc = prod.Descripcion || 'Sin descripción';
+                const marca = prod.Marca || 'N/A';
+                const unidades = parseFloat(prod.Unidades || 0).toFixed(0);
+                const precio = parseFloat(prod.Precio_Unitario || 0).toFixed(2);
+                const total = parseFloat(prod.Total || 0).toFixed(2);
+                const aplica = prod.aplica;
+                const aplicaIcono = aplica ? '<span class="text-green-500 font-bold">✅</span>' : '<span class="text-gray-400">—</span>';
+                const aplicaClass = aplica ? 'bg-green-50' : '';
+                
+                productosBody.innerHTML += `
+                    <tr class="${aplicaClass}">
+                        <td class="px-4 py-2 text-gray-800">${desc}</td>
+                        <td class="px-4 py-2 text-gray-600">${marca}</td>
+                        <td class="px-4 py-2 text-right text-gray-700">${unidades}</td>
+                        <td class="px-4 py-2 text-right text-gray-700">B/.${precio}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-gray-900">B/.${total}</td>
+                        <td class="px-4 py-2 text-center">${aplicaIcono}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Mostrar boletos generados
+        if (json.boletos && json.boletos.length > 0) {
+            boletosSection.classList.remove('hidden');
+            json.boletos.forEach((boleto, idx) => {
+                boletosDiv.innerHTML += `
+                    <span class="px-3 py-1.5 bg-white border border-green-300 rounded-lg font-mono text-sm font-bold text-green-700 shadow-sm">
+                        ${boleto}
+                    </span>
+                `;
+            });
+        }
+
+        loading.classList.add('hidden');
+        content.classList.remove('hidden');
+    } catch (err) {
+        loading.classList.add('hidden');
+        error.classList.remove('hidden');
+        error.textContent = 'No se pudo cargar el detalle de la factura.';
+    }
+}
+
+function toggleAdminMenu() {
+    const menu = document.getElementById('adminMobileMenu');
+    menu.classList.toggle('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('modalDetalle').classList.add('hidden');
 }
 </script>
 {% endblock %}
