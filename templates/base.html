@@ -41,6 +41,24 @@
                     <a href="/bases" class="hover:text-gold transition">Bases del Concurso</a>
                     <a href="/admin" class="hover:text-gold transition hidden">Administración</a>
                 </div>
+                <button
+                    type="button"
+                    id="mobileMenuButton"
+                    class="md:hidden inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/10 p-2 hover:bg-white/20 transition"
+                    aria-label="Abrir menu"
+                    aria-expanded="false"
+                    aria-controls="mobileMenu"
+                >
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="mobileMenu" class="hidden md:hidden pb-3 text-sm font-medium">
+                <div class="rounded-xl border border-white/10 bg-white/10 p-2">
+                    <a href="/" class="block rounded-lg px-4 py-3 hover:bg-white/10 hover:text-gold transition">Registrar Factura</a>
+                    <a href="/bases" class="block rounded-lg px-4 py-3 hover:bg-white/10 hover:text-gold transition">Bases del Concurso</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -60,6 +78,162 @@
         </div>
     </footer>
 
+    <div id="appModal" class="hidden fixed inset-0 z-[100]">
+        <div id="appModalOverlay" class="absolute inset-0 bg-slate-950/65 backdrop-blur-sm"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5">
+                <div class="p-6 sm:p-7">
+                    <div class="flex items-start gap-4">
+                        <div id="appModalIcon" class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rodelag/10 text-3xl">
+                            <span id="appModalIconText" aria-hidden="true">i</span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h2 id="appModalTitle" class="text-xl font-black text-slate-900">Aviso</h2>
+                            <p id="appModalMessage" class="mt-2 text-sm leading-6 text-slate-600"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+                    <button id="appModalCancel" type="button" class="hidden inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100">
+                        Cancelar
+                    </button>
+                    <button id="appModalConfirm" type="button" class="inline-flex items-center justify-center rounded-xl bg-rodelag px-4 py-3 text-sm font-bold text-white transition hover:bg-rodelagDark">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                const isOpen = !mobileMenu.classList.contains('hidden');
+                mobileMenu.classList.toggle('hidden', isOpen);
+                mobileMenuButton.setAttribute('aria-expanded', String(!isOpen));
+            });
+        }
+
+        const appModal = document.getElementById('appModal');
+        const appModalOverlay = document.getElementById('appModalOverlay');
+        const appModalIcon = document.getElementById('appModalIcon');
+        const appModalIconText = document.getElementById('appModalIconText');
+        const appModalTitle = document.getElementById('appModalTitle');
+        const appModalMessage = document.getElementById('appModalMessage');
+        const appModalCancel = document.getElementById('appModalCancel');
+        const appModalConfirm = document.getElementById('appModalConfirm');
+        const modalTones = {
+            info: {
+                icon: 'i',
+                iconClass: 'bg-rodelag/10 text-rodelag',
+                confirmClass: 'bg-rodelag hover:bg-rodelagDark text-white'
+            },
+            success: {
+                icon: '✓',
+                iconClass: 'bg-emerald-100 text-emerald-600',
+                confirmClass: 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            },
+            warning: {
+                icon: '!',
+                iconClass: 'bg-amber-100 text-amber-600',
+                confirmClass: 'bg-futbol hover:bg-futbolLight text-white'
+            },
+            danger: {
+                icon: '!',
+                iconClass: 'bg-red-100 text-red-600',
+                confirmClass: 'bg-red-600 hover:bg-red-700 text-white'
+            }
+        };
+
+        let appModalResolver = null;
+        let appModalCancelEnabled = false;
+
+        function setModalTone(tone) {
+            const palette = modalTones[tone] || modalTones.info;
+            appModalIcon.className = `flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl ${palette.iconClass}`;
+            appModalIconText.textContent = palette.icon;
+            appModalConfirm.className = `inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition ${palette.confirmClass}`;
+        }
+
+        function closeAppModal(result) {
+            if (!appModal || appModal.classList.contains('hidden')) return;
+
+            appModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+
+            const resolver = appModalResolver;
+            appModalResolver = null;
+            appModalCancelEnabled = false;
+
+            if (resolver) {
+                resolver(result);
+            }
+        }
+
+        function openAppModal({
+            title = 'Aviso',
+            message = '',
+            confirmText = 'Entendido',
+            cancelText = 'Cancelar',
+            tone = 'info',
+            showCancel = false
+        } = {}) {
+            if (!appModal) return Promise.resolve(false);
+
+            appModalTitle.textContent = title;
+            appModalMessage.textContent = message;
+            appModalConfirm.textContent = confirmText;
+            appModalCancel.textContent = cancelText;
+            appModalCancel.classList.toggle('hidden', !showCancel);
+            setModalTone(tone);
+
+            appModalCancelEnabled = showCancel;
+            appModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            return new Promise((resolve) => {
+                appModalResolver = resolve;
+                requestAnimationFrame(() => {
+                    appModalConfirm.focus();
+                });
+            });
+        }
+
+        window.showAppModal = function(options = {}) {
+            return openAppModal({ ...options, showCancel: false });
+        };
+
+        window.confirmAppModal = function(options = {}) {
+            return openAppModal({ ...options, showCancel: true });
+        };
+
+        if (appModalConfirm) {
+            appModalConfirm.addEventListener('click', () => closeAppModal(true));
+        }
+
+        if (appModalCancel) {
+            appModalCancel.addEventListener('click', () => closeAppModal(false));
+        }
+
+        if (appModalOverlay) {
+            appModalOverlay.addEventListener('click', () => closeAppModal(false));
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (!appModal || appModal.classList.contains('hidden')) return;
+
+            if (event.key === 'Escape') {
+                closeAppModal(false);
+            }
+
+            if (event.key === 'Enter' && document.activeElement === appModalCancel && appModalCancelEnabled) {
+                closeAppModal(false);
+            }
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

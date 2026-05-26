@@ -104,8 +104,15 @@ def init_mysql_tables():
     from src.config import PREMIOS
     for p in PREMIOS:
         cursor.execute(f'''
-            INSERT IGNORE INTO {TABLE_PREFIX}premios (id, marca, tv, valor, partido, fecha_fiesta, sorteo_id)
+            INSERT INTO {TABLE_PREFIX}premios (id, marca, tv, valor, partido, fecha_fiesta, sorteo_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                marca = VALUES(marca),
+                tv = VALUES(tv),
+                valor = VALUES(valor),
+                partido = VALUES(partido),
+                fecha_fiesta = VALUES(fecha_fiesta),
+                sorteo_id = VALUES(sorteo_id)
         ''', (p['id'], p['marca'], p['tv'], p['valor'], p['partido'], p['fecha_fiesta'], p['sorteo']))
 
     conn.commit()

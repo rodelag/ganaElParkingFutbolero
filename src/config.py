@@ -21,6 +21,15 @@ DB_NAME = os.getenv('DB_NAME', 'enx_rodelag')
 DB_NAME_DEV = os.getenv('DB_NAME_DEV', 'rodelag_desarrollo_interno')
 TABLE_PREFIX = 'parkingfutbolero2026_'
 
+# Configuración SMTP
+SMTP_HOST = os.getenv('SMTP_HOST', 'rodelag-com.mail.protection.outlook.com')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '25'))
+SMTP_FROM = os.getenv('SMTP_FROM', 'alerta.ventas@rodelag.com')
+
+# Modo de pruebas de correos: si True, todos los correos van a EMAIL_PRUEBAS
+MODO_PRUEBAS_EMAIL = True
+EMAIL_PRUEBAS = 'noel.santamaria@rodelag.com'
+
 # Marcas participantes
 MARCAS = ['LG', 'Sankey', 'Mystic', 'RCA', 'Hisense', 'Samsung']
 
@@ -34,7 +43,7 @@ MULTIPLICADOR_CREDITO_UNA = 2
 EDAD_MINIMA = 18
 
 # Fechas de la promocion
-FECHA_INICIO = '2026-04-30'
+FECHA_INICIO = '2026-04-01'
 FECHA_FIN = '2026-06-30'
 
 # Premios y fechas de fiestas
@@ -43,7 +52,7 @@ PREMIOS = [
     {'id': 2, 'marca': 'Hisense', 'tv': 'TV Hisense de 65"', 'valor': 619.99, 'partido': 'Panama vs Ghana', 'fecha_fiesta': '2026-06-17', 'sorteo': 1},
     {'id': 3, 'marca': 'Sankey', 'tv': 'TV Sankey 70"', 'valor': 419.99, 'partido': 'Panama vs Croacia', 'fecha_fiesta': '2026-06-23', 'sorteo': 1},
     {'id': 4, 'marca': 'Mystic', 'tv': 'TV Mystic 70"', 'valor': 539.99, 'partido': 'Panama vs Inglaterra', 'fecha_fiesta': '2026-06-27', 'sorteo': 1},
-    {'id': 5, 'marca': 'Samsung', 'tv': 'TV Samsung de 85"', 'valor': 2299.00, 'partido': 'Semifinal', 'fecha_fiesta': '2026-07-18', 'sorteo': 2},
+    {'id': 5, 'marca': 'Samsung', 'tv': 'TV Samsung de 85"', 'valor': 2299.00, 'partido': '3r. lugar', 'fecha_fiesta': '2026-07-18', 'sorteo': 2},
     {'id': 6, 'marca': 'RCA', 'tv': 'TV RCA de 70"', 'valor': 499.99, 'partido': 'La Final', 'fecha_fiesta': '2026-07-19', 'sorteo': 2},
 ]
 

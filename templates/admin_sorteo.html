@@ -7,15 +7,32 @@
     <div class="bg-rodelagDark text-white">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-6">
-                    <span class="font-bold text-lg">Admin Panel</span>
+                <span class="font-bold text-lg">Admin Panel</span>
+
+                <!-- Desktop links -->
+                <div class="hidden md:flex items-center space-x-6">
                     <a href="/admin/dashboard" class="text-sm hover:text-gold transition">Dashboard</a>
                     <a href="/admin/facturas" class="text-sm hover:text-gold transition">Facturas</a>
                     <a href="/admin/ganadores" class="text-sm hover:text-gold transition">Ganadores</a>
                     <a href="/admin/sorteo?sorteo=1" class="text-sm {% if sorteo_id == 1 %}bg-white/10 px-3 py-1.5 rounded-lg{% endif %} hover:bg-white/20 transition">Sorteo 1</a>
                     <a href="/admin/sorteo?sorteo=2" class="text-sm {% if sorteo_id == 2 %}bg-white/10 px-3 py-1.5 rounded-lg{% endif %} hover:bg-white/20 transition">Sorteo 2</a>
+                    <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
                 </div>
-                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+
+                <!-- Mobile hamburger -->
+                <button onclick="toggleAdminMenu()" class="md:hidden text-white focus:outline-none p-2">
+                    <svg id="adminMenuIcon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+
+            <!-- Mobile menu -->
+            <div id="adminMobileMenu" class="hidden md:hidden pb-4 space-y-2">
+                <a href="/admin/dashboard" class="block text-sm px-3 py-2 hover:text-gold transition">Dashboard</a>
+                <a href="/admin/facturas" class="block text-sm px-3 py-2 hover:text-gold transition">Facturas</a>
+                <a href="/admin/ganadores" class="block text-sm px-3 py-2 hover:text-gold transition">Ganadores</a>
+                <a href="/admin/sorteo?sorteo=1" class="block text-sm {% if sorteo_id == 1 %}bg-white/10 rounded-lg{% endif %} px-3 py-2 hover:text-gold transition">Sorteo 1</a>
+                <a href="/admin/sorteo?sorteo=2" class="block text-sm {% if sorteo_id == 2 %}bg-white/10 rounded-lg{% endif %} px-3 py-2 hover:text-gold transition">Sorteo 2</a>
+                <a href="/admin/logout" class="block text-sm text-red-300 hover:text-red-200 px-3 py-2 transition">Cerrar Sesión</a>
             </div>
         </div>
     </div>
@@ -64,24 +81,49 @@
         <div id="resultadoSorteo" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform transition-all">
                 <div class="text-6xl mb-4 animate-bounce">🏆</div>
-                <h2 class="text-2xl font-black text-gray-900 mb-2">¡Tenemos Ganador!</h2>
+                <h2 class="text-2xl font-black text-gray-900 mb-2">Candidato Seleccionado</h2>
+                <p class="text-sm text-gray-500">Llámelo y confirme solo si responde.</p>
                 <div id="ganadorInfo" class="mt-6 space-y-3 text-left bg-gray-50 rounded-xl p-5">
                 </div>
-                <button onclick="cerrarResultado()" class="mt-6 w-full bg-rodelag hover:bg-rodelagDark text-white font-bold py-3 rounded-xl transition">
-                    Aceptar
-                </button>
+                <div class="mt-6 grid gap-3">
+                    <button id="btnConfirmarGanador" onclick="confirmarGanador()" class="w-full bg-rodelag hover:bg-rodelagDark text-white font-bold py-3 rounded-xl transition">
+                        Confirmar ganador
+                    </button>
+                    <button id="btnBuscarOtro" onclick="rechazarYBuscarOtro()" class="w-full bg-futbol hover:bg-futbolLight text-white font-bold py-3 rounded-xl transition">
+                        No contestó, buscar otro
+                    </button>
+                    <button onclick="cerrarResultado()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition">
+                        Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-async function realizarSorteo(sorteoId, premioId) {
-    if (!confirm('¿Está seguro de realizar el sorteo para este premio?')) return;
-    
+let candidatoPendiente = null;
+let premioPendienteId = null;
+let sorteoPendienteId = null;
+
+async function realizarSorteo(sorteoId, premioId, pedirConfirmacion = true) {
     const btn = document.querySelector(`#premio-${premioId} button`);
+    const yaHayCandidato = btn && btn.textContent.trim() === 'Ver candidato';
+
+    if (pedirConfirmacion && !yaHayCandidato) {
+        const confirmado = await confirmAppModal({
+            title: 'Confirmar sorteo',
+            message: '¿Está seguro de realizar el sorteo para este premio?',
+            confirmText: 'Sí, realizar sorteo',
+            cancelText: 'Cancelar',
+            tone: 'warning'
+        });
+
+        if (!confirmado) return;
+    }
+    
     btn.disabled = true;
-    btn.textContent = 'Sorteando...';
+    btn.textContent = yaHayCandidato ? 'Cargando...' : 'Sorteando...';
     
     try {
         const res = await fetch('/api/admin/realizar-sorteo', {
@@ -92,15 +134,22 @@ async function realizarSorteo(sorteoId, premioId) {
         const data = await res.json();
         
         if (data.success) {
+            candidatoPendiente = data.ganador;
+            premioPendienteId = premioId;
+            sorteoPendienteId = sorteoId;
             document.getElementById('ganadorInfo').innerHTML = `
                 <div class="text-center mb-4">
                     <div class="text-4xl font-black text-rodelag">${data.ganador.nombre}</div>
                     <div class="text-gray-600 mt-1">Cédula: ${data.ganador.cedula}</div>
                 </div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div class="bg-white p-3 rounded-lg border border-gray-200">
                         <div class="text-gray-500">Teléfono</div>
-                        <div class="font-semibold">${data.ganador.telefono}</div>
+                        <div class="font-semibold">${data.ganador.telefono || '—'}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Email</div>
+                        <div class="font-semibold break-all">${data.ganador.email || '—'}</div>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-200">
                         <div class="text-gray-500">Boleto</div>
@@ -109,21 +158,128 @@ async function realizarSorteo(sorteoId, premioId) {
                 </div>
             `;
             document.getElementById('resultadoSorteo').classList.remove('hidden');
-            document.querySelector(`#premio-${premioId}`).remove();
+            btn.disabled = false;
+            btn.textContent = 'Ver candidato';
         } else {
-            alert(data.message);
+            await showAppModal({
+                title: 'No se pudo realizar el sorteo',
+                message: data.message,
+                confirmText: 'Entendido',
+                tone: 'danger'
+            });
             btn.disabled = false;
             btn.textContent = 'Seleccionar Ganador';
         }
     } catch (err) {
-        alert('Error al realizar el sorteo');
+        await showAppModal({
+            title: 'Error al realizar el sorteo',
+            message: 'Ocurrió un problema al seleccionar el candidato. Inténtelo nuevamente.',
+            confirmText: 'Entendido',
+            tone: 'danger'
+        });
         btn.disabled = false;
         btn.textContent = 'Seleccionar Ganador';
     }
 }
 
+function toggleAdminMenu() {
+    const menu = document.getElementById('adminMobileMenu');
+    menu.classList.toggle('hidden');
+}
+
 function cerrarResultado() {
     document.getElementById('resultadoSorteo').classList.add('hidden');
+}
+
+async function confirmarGanador() {
+    if (!candidatoPendiente || !premioPendienteId) return;
+
+    const btnConfirmar = document.getElementById('btnConfirmarGanador');
+    const btnBuscarOtro = document.getElementById('btnBuscarOtro');
+    btnConfirmar.disabled = true;
+    btnBuscarOtro.disabled = true;
+    btnConfirmar.textContent = 'Confirmando...';
+
+    try {
+        const res = await fetch('/api/admin/confirmar-ganador', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ganador_id: candidatoPendiente.id, premio_id: premioPendienteId})
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            await showAppModal({
+                title: 'No se pudo confirmar el ganador',
+                message: data.message,
+                confirmText: 'Entendido',
+                tone: 'danger'
+            });
+            return;
+        }
+
+        document.querySelector(`#premio-${premioPendienteId}`)?.remove();
+        candidatoPendiente = null;
+        premioPendienteId = null;
+        sorteoPendienteId = null;
+        cerrarResultado();
+    } catch (err) {
+        await showAppModal({
+            title: 'Error al confirmar el ganador',
+            message: 'Ocurrió un problema al confirmar el ganador. Inténtelo nuevamente.',
+            confirmText: 'Entendido',
+            tone: 'danger'
+        });
+    } finally {
+        btnConfirmar.disabled = false;
+        btnBuscarOtro.disabled = false;
+        btnConfirmar.textContent = 'Confirmar ganador';
+    }
+}
+
+async function rechazarYBuscarOtro() {
+    if (!candidatoPendiente || !premioPendienteId || !sorteoPendienteId) return;
+
+    const btnConfirmar = document.getElementById('btnConfirmarGanador');
+    const btnBuscarOtro = document.getElementById('btnBuscarOtro');
+    btnConfirmar.disabled = true;
+    btnBuscarOtro.disabled = true;
+    btnBuscarOtro.textContent = 'Buscando otro...';
+
+    try {
+        const res = await fetch('/api/admin/rechazar-ganador', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ganador_id: candidatoPendiente.id, premio_id: premioPendienteId})
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            await showAppModal({
+                title: 'No se pudo buscar otro candidato',
+                message: data.message,
+                confirmText: 'Entendido',
+                tone: 'danger'
+            });
+            return;
+        }
+
+        cerrarResultado();
+        candidatoPendiente = null;
+
+        await realizarSorteo(sorteoPendienteId, premioPendienteId, false);
+    } catch (err) {
+        await showAppModal({
+            title: 'Error al buscar otro candidato',
+            message: 'Ocurrió un problema al continuar el sorteo. Inténtelo nuevamente.',
+            confirmText: 'Entendido',
+            tone: 'danger'
+        });
+    } finally {
+        btnConfirmar.disabled = false;
+        btnBuscarOtro.disabled = false;
+        btnBuscarOtro.textContent = 'No contestó, buscar otro';
+    }
 }
 </script>
 {% endblock %}

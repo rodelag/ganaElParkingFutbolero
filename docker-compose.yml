@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: parkingfutbolero-app
+    ports:
+      - "127.0.0.1:5155:8080"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - FLASK_ENV=production
+      - TZ=America/Panama
+    restart: unless-stopped
+    networks:
+      - parkingfutbolero-network
+
+networks:
+  parkingfutbolero-network:
+    driver: bridge
