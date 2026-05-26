@@ -1,6 +1,7 @@
 import os
 import random
 import string
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from functools import wraps
 
@@ -13,15 +14,22 @@ from src.config import (
 )
 from src.database import (
     insertar_participante, insertar_factura, insertar_boleto,
-    obtener_participante_por_cedula, obtener_factura_por_numero,
-    obtener_boletos_por_participante, obtener_estadisticas,
+    obtener_participante_por_cedula, obtener_participante_por_cedula_flexible,
+    obtener_participante_por_factura,
+    obtener_factura_por_numero, obtener_boleto_por_numero,
+    obtener_boletos_por_participante, obtener_boletos_por_factura_numero, obtener_estadisticas,
     obtener_premios_disponibles, obtener_boletos_para_sorteo,
     asignar_ganador, obtener_ganadores, obtener_todas_las_facturas,
-    invalidar_boletos_por_factura
+    obtener_ganador_pendiente_por_premio, obtener_participantes_con_ganador_pendiente,
+    registrar_ganador_pendiente, confirmar_ganador_pendiente, descartar_ganador_pendiente,
+    invalidar_boletos_por_factura,
+    init_config_table, obtener_config, guardar_config
 )
 from src.mysql_db import (
-    buscar_cliente_por_ruc, validar_factura_completa
+    buscar_cliente_por_ruc, validar_factura_completa, validar_factura_para_sorteo,
+    obtener_productos_factura
 )
+from src.email_service import enviar_correo_confirmacion
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -41,16 +49,137 @@ def generar_numero_boleto():
     return ''.join(random.choices(chars, k=8))
 
 
+def normalizar_monto(valor):
+    try:
+        return Decimal(str(valor or 0))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal('0')
+
+
 def calcular_boletos(monto, credito_una):
-    boletos = int(monto // MONTO_BOLETO)
+    boletos = int(normalizar_monto(monto) // normalizar_monto(MONTO_BOLETO))
     if credito_una:
         boletos *= MULTIPLICADOR_CREDITO_UNA
     return boletos
 
 
+def calcular_boletos_por_productos(productos, credito_una):
+    """Calcula boletos por monto elegible acumulado en productos participantes."""
+    detalle = []
+    monto_elegible = Decimal('0')
+
+    for prod in productos:
+        if not prod.get('aplica'):
+            continue
+
+        total_linea = normalizar_monto(prod.get('Total'))
+        if total_linea <= 0:
+            total_linea = normalizar_monto(prod.get('Precio_Unitario')) * normalizar_monto(prod.get('Unidades'))
+
+        monto_elegible += total_linea
+        detalle.append({
+            'producto': prod.get('Descripcion') or 'Producto',
+            'marca': prod.get('Marca') or '',
+            'monto': float(total_linea)
+        })
+
+    boletos_base = calcular_boletos(monto_elegible, False)
+    total_boletos = calcular_boletos(monto_elegible, credito_una)
+
+    return {
+        'total_boletos': total_boletos,
+        'boletos_base': boletos_base,
+        'monto_elegible': float(monto_elegible),
+        'detalle': detalle
+    }
+
+
+def _obtener_estado_sorteos():
+    estado = session.get('sorteos_admin')
+    if not isinstance(estado, dict):
+        estado = {}
+        session['sorteos_admin'] = estado
+    return estado
+
+
+def _obtener_rechazados_premio(premio_id):
+    estado = _obtener_estado_sorteos()
+    premio_estado = estado.setdefault(str(premio_id), {'participantes_rechazados': []})
+    return premio_estado['participantes_rechazados']
+
+
+def _agregar_participante_rechazado(premio_id, participante_id):
+    rechazados = _obtener_rechazados_premio(premio_id)
+    if participante_id not in rechazados:
+        rechazados.append(participante_id)
+        session.modified = True
+
+
+def _limpiar_rechazados_premio(premio_id):
+    estado = _obtener_estado_sorteos()
+    if str(premio_id) in estado:
+        estado.pop(str(premio_id), None)
+        session.modified = True
+
+
+def _serializar_candidato(ganador):
+    return {
+        'id': ganador['id'],
+        'participante_id': ganador['participante_id'],
+        'nombre': ganador['nombre'],
+        'cedula': ganador['cedula'],
+        'telefono': ganador['telefono'],
+        'email': ganador.get('email') or '',
+        'boleto': ganador['numero_boleto']
+    }
+
+
 @app.route('/')
 def index():
     return render_template('index.html', marcas=MARCAS, fecha_inicio=FECHA_INICIO, fecha_fin=FECHA_FIN)
+
+
+@app.route('/api/validar-factura', methods=['POST'])
+def api_validar_factura():
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'Datos inválidos'}), 400
+
+    numero_factura = data.get('numero_factura', '').strip()
+    if not numero_factura:
+        return jsonify({'success': False, 'message': 'El número de factura es requerido'}), 400
+
+    # Validar factura contra Rodelag con checks
+    checks, datos_factura = validar_factura_para_sorteo(numero_factura)
+
+    # Verificar si ya fue registrada en la promoción (check adicional)
+    if datos_factura:
+        if obtener_factura_por_numero(numero_factura):
+            checks.append({'campo': 'No registrada previamente', 'pass': False, 'mensaje': 'Esta factura ya fue registrada anteriormente en la promoción.'})
+            return jsonify({'success': False, 'checks': checks, 'datos': None}), 400
+        else:
+            checks.append({'campo': 'No registrada previamente', 'pass': True, 'mensaje': 'Factura disponible para registrar.'})
+
+    # Verificar si todos los checks pasaron
+    todos_pass = all(c['pass'] for c in checks)
+
+    if not todos_pass:
+        return jsonify({'success': False, 'checks': checks, 'datos': None}), 400
+
+    # Calcular boletos por producto para mostrar en frontend
+    resumen_boletos = calcular_boletos_por_productos(
+        datos_factura['productos'], datos_factura['credito_una']
+    )
+    datos_factura['boletos_estimados'] = resumen_boletos['total_boletos']
+    datos_factura['boletos_base'] = resumen_boletos['boletos_base']
+    datos_factura['monto_elegible'] = resumen_boletos['monto_elegible']
+    datos_factura['detalle_boletos'] = resumen_boletos['detalle']
+
+    return jsonify({
+        'success': True,
+        'checks': checks,
+        'datos': datos_factura
+    })
 
 
 @app.route('/api/registrar', methods=['POST'])
@@ -60,59 +189,60 @@ def api_registrar():
         return jsonify({'success': False, 'message': 'Datos inválidos'}), 400
 
     # Validar campos requeridos
-    campos_requeridos = ['nombre', 'cedula', 'telefono', 'email', 'numero_factura', 'marca', 'monto', 'fecha_compra']
+    campos_requeridos = ['numero_factura', 'marca']
     for campo in campos_requeridos:
         if not data.get(campo):
             return jsonify({'success': False, 'message': f'El campo {campo} es requerido'}), 400
 
-    nombre = data.get('nombre', '').strip()
-    cedula = data.get('cedula', '').strip()
-    telefono = data.get('telefono', '').strip()
-    email = data.get('email', '').strip()
-    direccion = data.get('direccion', '').strip()
     numero_factura = data.get('numero_factura', '').strip()
     marca_solicitada = data.get('marca', '').strip()
-    monto = float(data.get('monto', 0))
-    sucursal = data.get('sucursal', '').strip()
-    fecha_compra = data.get('fecha_compra', '').strip()
-    credito_una = bool(data.get('credito_una', False))
 
     # === VALIDACIONES CONTRA BASE DE DATOS RODELAG ===
-    
-    # 1. Validar que el cliente exista en Rodelag
-    cliente_rodelag = buscar_cliente_por_ruc(cedula)
-    if not cliente_rodelag:
-        return jsonify({'success': False, 'message': 'La cédula no existe en nuestro sistema de clientes. Verifique que sea un cliente registrado de Rodelag.'}), 400
 
-    # 2. Validar factura contra Rodelag
-    exito, mensaje_error, datos_factura = validar_factura_completa(numero_factura, cedula, monto)
-    if not exito:
-        return jsonify({'success': False, 'message': mensaje_error}), 400
+    # 1. Validar factura y obtener datos
+    checks, datos_factura = validar_factura_para_sorteo(numero_factura)
+    if not datos_factura:
+        return jsonify({'success': False, 'message': checks[-1]['mensaje'] if checks else 'Factura no válida'}), 400
 
-    # 3. Verificar que la marca solicitada esté en las marcas de la factura
+    # 2. Verificar que la marca solicitada esté en las marcas de la factura
     marcas_factura = [m.upper() for m in datos_factura['marcas']]
     if marca_solicitada.upper() not in marcas_factura:
         marcas_str = ', '.join(datos_factura['marcas'])
         return jsonify({'success': False, 'message': f'La factura contiene productos de las marcas: {marcas_str}, pero no de {marca_solicitada}.'}), 400
 
-    # 4. Verificar si la factura ya fue registrada en la promoción
+    # 3. Verificar si la factura ya fue registrada en la promoción
     if obtener_factura_por_numero(numero_factura):
         return jsonify({'success': False, 'message': 'Esta factura ya fue registrada anteriormente en la promoción.'}), 400
 
+    # Obtener datos del cliente desde la factura (origen Rodelag)
+    cliente = datos_factura['cliente']
+    credito_una = datos_factura['credito_una']
+
+    # Usar datos del frontend si el usuario los completó/corrigió,
+    # de lo contrario usar los de Rodelag
+    nombre = data.get('nombre', '').strip() or cliente['nombre']
+    cedula = data.get('cedula', '').strip() or cliente['cedula']
+    telefono = data.get('telefono', '').strip() or cliente['telefono']
+    email = data.get('email', '').strip() or cliente['email']
+    direccion = data.get('direccion', '').strip() or cliente['direccion']
+
     # === REGISTRO EN LA PROMOCIÓN ===
-    
-    # Insertar participante
+
+    # Insertar o actualizar participante
     participante_id = insertar_participante(nombre, cedula, telefono, email, direccion)
     if not participante_id:
         return jsonify({'success': False, 'message': 'Error al registrar participante'}), 500
 
-    # Calcular boletos (usamos el SubTotal real de la factura de Rodelag)
+    # Calcular boletos por monto participante acumulado
+    resumen_boletos = calcular_boletos_por_productos(
+        datos_factura['productos'], credito_una
+    )
+    boletos = resumen_boletos['total_boletos']
     monto_real = datos_factura['subtotal']
-    boletos = calcular_boletos(monto_real, credito_una)
 
     # Insertar factura
-    factura_id = insertar_factura(participante_id, numero_factura, marca_solicitada, monto_real, 
-                                   datos_factura.get('sucursal') or sucursal, datos_factura['fecha'], credito_una, boletos)
+    factura_id = insertar_factura(participante_id, numero_factura, marca_solicitada, monto_real,
+                                   datos_factura.get('sucursal') or '', datos_factura['fecha'], credito_una, boletos)
     if not factura_id:
         return jsonify({'success': False, 'message': 'Error al registrar factura'}), 500
 
@@ -124,6 +254,16 @@ def api_registrar():
             numero_boleto = generar_numero_boleto()
         boletos_generados.append(numero_boleto)
 
+    # Enviar correo de confirmación
+    enviar_correo_confirmacion(
+        destinatario=email,
+        nombre=nombre,
+        numero_factura=numero_factura,
+        boletos=boletos,
+        numeros_boletos=boletos_generados,
+        credito_una=credito_una
+    )
+
     return jsonify({
         'success': True,
         'message': 'Registro exitoso',
@@ -131,17 +271,57 @@ def api_registrar():
         'numeros_boletos': boletos_generados,
         'credito_una': credito_una,
         'monto_validado': monto_real,
-        'cliente': datos_factura['cliente_nombre']
+        'cliente': nombre
     })
 
 
 @app.route('/api/consultar', methods=['GET'])
 def api_consultar():
     cedula = request.args.get('cedula', '').strip()
-    if not cedula:
-        return jsonify({'success': False, 'message': 'Cédula requerida'}), 400
+    boleto = request.args.get('boleto', '').strip().upper()
+    factura = request.args.get('factura', '').strip()
 
-    participante = obtener_participante_por_cedula(cedula)
+    if not cedula and not boleto and not factura:
+        return jsonify({'success': False, 'message': 'Ingresa una cédula, número de boleto o número de factura'}), 400
+
+    # Buscar por número de boleto
+    if boleto:
+        boleto_data = obtener_boleto_por_numero(boleto)
+        if not boleto_data:
+            return jsonify({'success': False, 'message': 'No se encontró el boleto ingresado'}), 404
+        participante = {
+            'id': boleto_data['participante_id'],
+            'nombre': boleto_data['nombre'],
+            'cedula': boleto_data['cedula'],
+            'telefono': boleto_data['telefono'],
+            'email': boleto_data['email'],
+            'es_ganador': boleto_data['es_ganador']
+        }
+        boletos = obtener_boletos_por_participante(participante['id'])
+        return jsonify({
+            'success': True,
+            'participante': participante,
+            'total_boletos': len(boletos),
+            'boletos': boletos,
+            'busqueda': 'boleto'
+        })
+
+    # Buscar por número de factura
+    if factura:
+        participante = obtener_participante_por_factura(factura)
+        if not participante:
+            return jsonify({'success': False, 'message': 'No se encontró la factura ingresada'}), 404
+        boletos = obtener_boletos_por_participante(participante['id'])
+        return jsonify({
+            'success': True,
+            'participante': participante,
+            'total_boletos': len(boletos),
+            'boletos': boletos,
+            'busqueda': 'factura'
+        })
+
+    # Buscar por cédula (flexible: con o sin guiones)
+    participante = obtener_participante_por_cedula_flexible(cedula)
     if not participante:
         return jsonify({'success': False, 'message': 'No se encontraron registros para esta cédula'}), 404
 
@@ -150,7 +330,8 @@ def api_consultar():
         'success': True,
         'participante': participante,
         'total_boletos': len(boletos),
-        'boletos': boletos
+        'boletos': boletos,
+        'busqueda': 'cedula'
     })
 
 
@@ -197,8 +378,10 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
+    init_config_table()  # Asegurar que la tabla y valor default existan
     stats = obtener_estadisticas()
-    return render_template('admin_dashboard.html', stats=stats, sorteos=SORTEOS)
+    modo_pruebas = obtener_config('modo_pruebas_email', '1') == '1'
+    return render_template('admin_dashboard.html', stats=stats, sorteos=SORTEOS, modo_pruebas_email=modo_pruebas)
 
 
 @app.route('/admin/facturas')
@@ -235,10 +418,40 @@ def api_admin_estadisticas():
     return jsonify(stats)
 
 
+@app.route('/api/admin/modo-pruebas', methods=['GET'])
+@login_required
+def api_get_modo_pruebas():
+    init_config_table()
+    valor = obtener_config('modo_pruebas_email', '1')
+    return jsonify({'modo_pruebas': valor == '1'})
+
+
+@app.route('/api/admin/modo-pruebas', methods=['POST'])
+@login_required
+def api_set_modo_pruebas():
+    data = request.get_json() or {}
+    activo = bool(data.get('activo', False))
+    guardar_config('modo_pruebas_email', '1' if activo else '0')
+    return jsonify({'success': True, 'modo_pruebas': activo})
+
+
+@app.route('/api/admin/factura-detalle/<numero_factura>')
+@login_required
+def api_factura_detalle(numero_factura):
+    productos = obtener_productos_factura(numero_factura)
+    boletos = obtener_boletos_por_factura_numero(numero_factura)
+    # Marcar cuáles aplican a la promoción
+    marcas_participantes = [m.upper() for m in MARCAS]
+    for p in productos:
+        marca = (p.get('Marca') or '').strip()
+        p['aplica'] = bool(marca and marca.upper() in marcas_participantes)
+    return jsonify({'success': True, 'productos': productos, 'boletos': [b['numero_boleto'] for b in boletos]})
+
+
 @app.route('/api/admin/realizar-sorteo', methods=['POST'])
 @login_required
 def api_realizar_sorteo():
-    data = request.get_json()
+    data = request.get_json() or {}
     sorteo_id = data.get('sorteo_id')
     premio_id = data.get('premio_id')
 
@@ -250,23 +463,81 @@ def api_realizar_sorteo():
     if not premio:
         return jsonify({'success': False, 'message': 'Premio no disponible'}), 400
 
+    ganador_pendiente = obtener_ganador_pendiente_por_premio(premio_id)
+    if ganador_pendiente:
+        return jsonify({
+            'success': True,
+            'pendiente': True,
+            'message': 'Ya hay un candidato pendiente de confirmar para este premio.',
+            'ganador': _serializar_candidato(ganador_pendiente)
+        })
+
     boletos = obtener_boletos_para_sorteo()
     if not boletos:
         return jsonify({'success': False, 'message': 'No hay boletos disponibles para el sorteo'}), 400
 
-    # Seleccionar ganador aleatorio
-    ganador_boleto = random.choice(boletos)
-    asignar_ganador(ganador_boleto['participante_id'], premio_id, sorteo_id, ganador_boleto['id'])
+    participantes_rechazados = set(_obtener_rechazados_premio(premio_id))
+    participantes_pendientes = set(obtener_participantes_con_ganador_pendiente())
+    participantes_excluidos = participantes_rechazados | participantes_pendientes
+    boletos_disponibles = [b for b in boletos if b['participante_id'] not in participantes_excluidos]
+    if not boletos_disponibles:
+        return jsonify({'success': False, 'message': 'No hay más participantes disponibles para este premio.'}), 400
+
+    ganador_boleto = random.choice(boletos_disponibles)
+    ganador_id = registrar_ganador_pendiente(ganador_boleto['participante_id'], premio_id, sorteo_id, ganador_boleto['id'])
+    ganador_pendiente = obtener_ganador_pendiente_por_premio(premio_id)
+    if not ganador_id or not ganador_pendiente:
+        return jsonify({'success': False, 'message': 'No se pudo preparar el candidato para confirmación.'}), 500
 
     return jsonify({
         'success': True,
-        'message': 'Ganador seleccionado',
-        'ganador': {
-            'nombre': ganador_boleto['nombre'],
-            'cedula': ganador_boleto['cedula'],
-            'telefono': ganador_boleto['telefono'],
-            'boleto': ganador_boleto['numero_boleto']
-        }
+        'pendiente': True,
+        'message': 'Candidato seleccionado. Confirme si contestó la llamada.',
+        'ganador': _serializar_candidato(ganador_pendiente)
+    })
+
+
+@app.route('/api/admin/confirmar-ganador', methods=['POST'])
+@login_required
+def api_confirmar_ganador():
+    data = request.get_json() or {}
+    ganador_id = data.get('ganador_id')
+    premio_id = data.get('premio_id')
+
+    if not ganador_id or not premio_id:
+        return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
+
+    ganador = confirmar_ganador_pendiente(ganador_id)
+    if not ganador or ganador['premio_id'] != premio_id:
+        return jsonify({'success': False, 'message': 'El candidato ya no está disponible para confirmar.'}), 400
+
+    _limpiar_rechazados_premio(premio_id)
+
+    return jsonify({
+        'success': True,
+        'message': 'Ganador confirmado correctamente.'
+    })
+
+
+@app.route('/api/admin/rechazar-ganador', methods=['POST'])
+@login_required
+def api_rechazar_ganador():
+    data = request.get_json() or {}
+    ganador_id = data.get('ganador_id')
+    premio_id = data.get('premio_id')
+
+    if not ganador_id or not premio_id:
+        return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
+
+    ganador = descartar_ganador_pendiente(ganador_id)
+    if not ganador or ganador['premio_id'] != premio_id:
+        return jsonify({'success': False, 'message': 'El candidato ya no está disponible para descartar.'}), 400
+
+    _agregar_participante_rechazado(premio_id, ganador['participante_id'])
+
+    return jsonify({
+        'success': True,
+        'message': 'Candidato descartado. Puede buscar otro.'
     })
 
 
@@ -289,6 +560,30 @@ def api_exportar_facturas():
     output.seek(0)
     return Response(output, mimetype='text/csv',
                     headers={"Content-Disposition": "attachment;filename=facturas_parking_futbolero.csv"})
+
+
+@app.route('/api/admin/exportar-ganadores')
+@login_required
+def api_exportar_ganadores():
+    import csv
+    import io
+    sorteo_id = request.args.get('sorteo', type=int)
+    ganadores = obtener_ganadores(sorteo_id)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Nombre', 'Cedula', 'Telefono', 'Email', 'Premio', 'Marca', 'Partido', 
+                     'Fecha Fiesta', 'Fecha Sorteo', 'Sorteo ID'])
+    for g in ganadores:
+        writer.writerow([
+            g['id'], g['nombre'], g['cedula'], g['telefono'], g['email'],
+            g['tv'], g['marca'], g['partido'], g['fecha_fiesta'],
+            g['fecha_sorteo'].strftime('%Y-%m-%d') if g.get('fecha_sorteo') else '',
+            g['sorteo_id']
+        ])
+    output.seek(0)
+    filename = f"ganadores_sorteo_{sorteo_id}.csv" if sorteo_id else "ganadores_parking_futbolero.csv"
+    return Response(output, mimetype='text/csv',
+                    headers={"Content-Disposition": f"attachment;filename={filename}"})
 
 
 if __name__ == '__main__':

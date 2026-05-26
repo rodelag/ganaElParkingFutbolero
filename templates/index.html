@@ -8,6 +8,15 @@
          class="w-full h-auto object-cover object-center max-h-[400px] sm:max-h-[500px]">
 </div>
 
+<!-- Disclaimer -->
+<div class="bg-yellow-50 border-b border-yellow-200">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+        <p class="text-xs text-yellow-800 text-center leading-relaxed">
+            Promoción válida del 30 de abril al 30 de junio de 2026. Por cada B/.100.00 en compras antes de ITBMS en Rodelag o en rodelag.com de las marcas LG, Sankey, Mystic, RCA, Hisense y Samsung el cliente acumula 1 boleto electrónico y por cada B/.100 en compras con Crédito de Una, el cliente acumula doble boleto. Son 2 tómbolas electrónicas; 2 de junio y 3 de julio 2026. Ver condiciones, detalles de premios y fiestas futboleras en rodelag.com. Aprobado JCJ MEF RES 2026-1331 del 16 de abril de 2026.
+        </p>
+    </div>
+</div>
+
 <!-- Info Strip -->
 <div class="bg-rodelagDark border-t border-white/10">
     <div class="max-w-7xl mx-auto px-4 py-4">
@@ -40,93 +49,255 @@
 </div>
 
 <!-- Formulario y Consulta -->
-<div class="max-w-7xl mx-auto px-4 py-16">
+<div class="max-w-7xl mx-auto px-4 py-12 sm:py-16 overflow-x-hidden">
     <div class="grid lg:grid-cols-2 gap-12 items-start">
         <!-- Formulario de Registro -->
-        <div>
-            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 relative" style="z-index: 10;">
-                <div class="flex items-center gap-3 mb-2">
+        <div class="min-w-0">
+            <div class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 border border-gray-100 relative overflow-hidden min-w-0" style="z-index: 10;">
+                <div class="flex items-center gap-3 mb-2 min-w-0">
                     <div class="w-10 h-10 bg-futbol rounded-full flex items-center justify-center text-white text-lg">⚽</div>
-                    <h2 class="text-2xl font-bold text-gray-900">Registra tu Factura</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Registra tu Factura</h2>
                 </div>
-                <p class="text-gray-500 text-sm mb-6">Completa el formulario para acumular boletos electrónicos</p>
+                <p class="text-gray-500 text-sm mb-6">Sigue los pasos para registrar tu factura y acumular boletos</p>
+
+                <!-- Wizard Steps Indicator -->
+                <div class="flex items-center justify-between gap-1 sm:gap-2 mb-6 sm:mb-8 px-0 sm:px-2 min-w-0">
+                    <div class="step-indicator flex min-w-0 flex-col items-center" data-step="1">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 bg-rodelag text-white shadow-md" id="stepCircle1">1</div>
+                        <span class="text-[10px] sm:text-xs font-semibold mt-1.5 transition-colors text-rodelag text-center" id="stepLabel1">Validar</span>
+                    </div>
+                    <div class="min-w-0 flex-1 h-1 mx-1 sm:mx-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-rodelag transition-all duration-500 w-0" id="stepLine1"></div>
+                    </div>
+                    <div class="step-indicator flex min-w-0 flex-col items-center" data-step="2">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 bg-gray-200 text-gray-500" id="stepCircle2">2</div>
+                        <span class="text-[10px] sm:text-xs font-semibold mt-1.5 transition-colors text-gray-400 text-center" id="stepLabel2">Revisar</span>
+                    </div>
+                    <div class="min-w-0 flex-1 h-1 mx-1 sm:mx-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-rodelag transition-all duration-500 w-0" id="stepLine2"></div>
+                    </div>
+                    <div class="step-indicator flex min-w-0 flex-col items-center" data-step="3">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 bg-gray-200 text-gray-500" id="stepCircle3">3</div>
+                        <span class="text-[10px] sm:text-xs font-semibold mt-1.5 transition-colors text-gray-400 text-center" id="stepLabel3">Registrar</span>
+                    </div>
+                </div>
                 
                 <form id="registroForm" class="space-y-5 relative" style="z-index: 20;">
-                    <div class="grid sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre completo *</label>
-                            <input type="text" name="nombre" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="Tu nombre">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cédula / Pasaporte *</label>
-                            <input type="text" name="cedula" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="8-123-4567">
-                        </div>
-                    </div>
-                    
-                    <div class="grid sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Teléfono *</label>
-                            <input type="tel" name="telefono" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="6000-0000">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Correo electrónico *</label>
-                            <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="tu@email.com">
-                        </div>
-                    </div>
+                    <!-- Área de mensajes de error -->
+                    <div id="areaChecks" class="hidden space-y-2"></div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Dirección</label>
-                        <input type="text" name="direccion" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="Tu dirección (opcional)">
-                    </div>
-
-                    <hr class="border-gray-200">
-
-                    <div class="grid sm:grid-cols-2 gap-5">
-                        <div>
+                    <!-- ========== PASO 1: Validar Factura ========== -->
+                    <div id="paso1" class="transition-all duration-500">
+                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                            <h3 class="font-bold text-gray-900 mb-1">Paso 1: Ingresa tu factura</h3>
+                            <p class="text-xs text-gray-500 mb-4">Escribe el número de factura tal como aparece impreso</p>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Número de Factura *</label>
-                            <input type="text" name="numero_factura" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="FAC-000000">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Marca *</label>
-                            <select name="marca" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition bg-white">
-                                <option value="">Selecciona marca</option>
-                                {% for marca in marcas %}
-                                <option value="{{ marca }}">{{ marca }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Monto (antes de ITBMS) *</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-2.5 text-gray-500 font-semibold">B/.</span>
-                                <input type="number" name="monto" step="0.01" min="100" required class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="0.00">
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input type="text" id="numeroFactura" name="numero_factura" required 
+                                       class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition bg-white" 
+                                       placeholder="Ej: NTC02N0000000">
+                                <button type="button" id="btnValidar" onclick="validarFactura()" 
+                                        class="bg-rodelag hover:bg-rodelagDark text-white font-bold px-6 py-2.5 rounded-lg transition whitespace-nowrap shadow-md">
+                                    Validar Factura
+                                </button>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de compra *</label>
-                            <input type="date" name="fecha_compra" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition">
-                        </div>
                     </div>
 
-                    <div class="grid sm:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Sucursal</label>
-                            <input type="text" name="sucursal" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rodelag focus:border-rodelag outline-none transition" placeholder="Sucursal Rodelag">
+                    <!-- ========== PASO 2: Revisar Datos ========== -->
+                    <div id="paso2" class="hidden space-y-5 transition-all duration-500">
+                        <div class="bg-green-50 rounded-xl p-4 border border-green-200 flex items-start gap-3">
+                            <span class="text-xl">✅</span>
+                            <div>
+                                <p class="text-sm font-bold text-green-800">Factura validada correctamente</p>
+                                <p class="text-xs text-green-700">Revisa los datos de tu compra y completa la información que falte.</p>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <label class="flex items-center space-x-3 cursor-pointer select-none mt-6">
-                                <input type="checkbox" name="credito_una" value="1" class="w-5 h-5 text-rodelag border-gray-300 rounded focus:ring-rodelag">
+
+                        <!-- Datos del Cliente -->
+                        <div>
+                            <h3 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-rodelag text-white text-xs flex items-center justify-center">2</span>
+                                Datos del Cliente
+                            </h3>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div class="relative">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Nombre completo</label>
+                                    <div class="relative">
+                                        <input type="text" name="nombre" id="inputNombre"
+                                               class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                                placeholder="Se autocompleta al validar">
+                                        <span id="checkNombre" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Cédula / Pasaporte</label>
+                                    <div class="relative">
+                                        <input type="text" name="cedula" id="inputCedula"
+                                               class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                                placeholder="Se autocompleta al validar">
+                                        <span id="checkCedula" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid sm:grid-cols-2 gap-4 mt-4">
+                                <div class="relative">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Teléfono *</label>
+                                    <div class="relative">
+                                        <input type="tel" name="telefono" id="inputTelefono"
+                                               class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                               placeholder="Ej: 6000-0000">
+                                        <span id="checkTelefono" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Correo electrónico *</label>
+                                    <div class="relative">
+                                        <input type="email" name="email" id="inputEmail"
+                                               class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                               placeholder="Ej: nombre@email.com">
+                                        <span id="checkEmail" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative mt-4">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Dirección</label>
+                                <div class="relative">
+                                    <input type="text" name="direccion" id="inputDireccion"
+                                           class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                           placeholder="Ej: Calle 50, Casa 123">
+                                    <span id="checkDireccion" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Datos de la Compra -->
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Fecha de compra</label>
+                                <div class="relative">
+                                    <input type="text" name="fecha_compra" id="inputFecha"
+                                           class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                            placeholder="Se autocompleta al validar">
+                                    <span id="checkFecha" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Sucursal</label>
+                                <div class="relative">
+                                    <input type="text" name="sucursal" id="inputSucursal"
+                                           class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-700 outline-none transition focus:ring-2 focus:ring-rodelag focus:border-rodelag"
+                                            placeholder="Se autocompleta al validar">
+                                    <span id="checkSucursal" class="hidden absolute right-3 top-3 text-green-500 text-lg">✅</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de productos -->
+                        <div id="tablaProductos" class="hidden">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Productos en la factura:</label>
+                            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="min-w-full text-sm">
+                                    <thead class="bg-gray-50 text-gray-600 font-semibold">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">Producto</th>
+                                            <th class="px-3 py-2 text-left">Marca</th>
+                                            <th class="px-3 py-2 text-right">Cant.</th>
+                                            <th class="px-3 py-2 text-right">Precio</th>
+                                            <th class="px-3 py-2 text-center">Aplica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listaProductos" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Crédito de Una (automático) -->
+                        <div class="flex items-center bg-yellow-50 rounded-lg px-4 py-3 border border-yellow-200" id="creditoUnaContainer">
+                            <label class="flex items-center space-x-3 select-none cursor-default">
+                                <div id="creditoUnaCustom" class="hidden w-5 h-5 rounded border-2 flex items-center justify-center">
+                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
                                 <span class="text-sm font-semibold text-gray-700">Pagado con <span class="text-rodelag font-bold">Crédito de Una</span></span>
                             </label>
+                            <input type="checkbox" name="credito_una" id="checkCredito" value="1" disabled class="hidden">
+                        </div>
+
+                        <!-- Contador de boletos -->
+                        <div id="contadorBoletos" class="hidden bg-rodelag/5 border border-rodelag/20 rounded-xl p-5 text-center">
+                            <p class="text-sm text-gray-600">Boletos que acumularás con esta factura:</p>
+                            <p class="text-4xl font-black text-rodelag mt-1" id="numeroBoletos">0</p>
+                            <p class="text-xs text-gray-500 mt-1" id="detalleBoletosTexto"></p>
+                        </div>
+
+                        <!-- Botón para ir al paso 3 -->
+                        <button type="button" onclick="irAlPaso3()" 
+                                class="w-full bg-futbol hover:bg-futbolLight text-white font-bold py-3.5 rounded-xl shadow-lg shadow-futbol/30 transition transform hover:scale-[1.02] active:scale-[0.98]">
+                            Continuar al registro →
+                        </button>
+                    </div>
+
+                    <!-- ========== PASO 3: Confirmar y Registrar ========== -->
+                    <div id="paso3" class="hidden space-y-5 transition-all duration-500">
+                        <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                            <h3 class="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center">3</span>
+                                Confirma tu registro
+                            </h3>
+                            <p class="text-xs text-blue-700">Revisa que todos los datos sean correctos antes de enviar.</p>
+                        </div>
+
+                        <!-- Resumen de datos -->
+                        <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Factura</span>
+                                <span class="text-sm font-bold text-gray-900 break-all" id="resumenFactura">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Cliente</span>
+                                <span class="text-sm font-bold text-gray-900" id="resumenCliente">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Cédula</span>
+                                <span class="text-sm font-bold text-gray-900" id="resumenCedula">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Teléfono</span>
+                                <span class="text-sm font-bold text-gray-900" id="resumenTelefono">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Email</span>
+                                <span class="text-sm font-bold text-gray-900 break-all" id="resumenEmail">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between border-b border-gray-200 pb-2">
+                                <span class="text-xs text-gray-500 uppercase">Monto participante</span>
+                                <span class="text-sm font-bold text-gray-900" id="resumenMonto">—</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-1">
+                                <span class="text-xs text-gray-500 uppercase">Boletos a acumular</span>
+                                <span class="text-xl font-black text-futbol" id="resumenBoletos">—</span>
+                            </div>
+                            <div id="resumenCredito" class="hidden text-center pt-2">
+                                <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">Doble boletos por Crédito de Una</span>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button type="button" onclick="irAlPaso2()" 
+                                    class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition">
+                                ← Volver
+                            </button>
+                            <button type="submit" id="btnRegistrar" class="flex-[2] bg-rodelag hover:bg-rodelagDark text-white font-bold py-3 rounded-xl shadow-lg shadow-rodelag/30 transition transform hover:scale-[1.02] active:scale-[0.98] pulse-button">
+                                Registrar Factura
+                            </button>
                         </div>
                     </div>
 
-                    <button type="submit" id="btnRegistrar" class="w-full bg-rodelag hover:bg-rodelagDark text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rodelag/30 transition transform hover:scale-[1.02] active:scale-[0.98] pulse-button">
-                        Registrar Factura
-                    </button>
+                    <!-- Marca oculta para enviar al backend -->
+                    <input type="hidden" name="marca" id="inputMarca" value="">
                 </form>
 
                 <div id="resultadoRegistro" class="hidden mt-6 p-5 rounded-xl"></div>
@@ -134,15 +305,33 @@
         </div>
 
         <!-- Consultar boletos -->
-        <div>
-            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                <div class="flex items-center gap-3 mb-4">
+        <div class="min-w-0">
+            <div class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 border border-gray-100 overflow-hidden min-w-0">
+                <div class="flex items-center gap-3 mb-4 min-w-0">
                     <div class="w-10 h-10 bg-gold rounded-full flex items-center justify-center text-gray-900 text-lg">🏆</div>
-                    <h2 class="text-xl font-bold text-gray-900">Consulta tus Boletos</h2>
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-900">Consulta tus Boletos</h2>
                 </div>
-                <div class="flex gap-3">
-                    <input type="text" id="consultaCedula" placeholder="Ingresa tu cédula" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-futbol focus:border-futbol outline-none transition">
-                    <button onclick="consultarBoletos()" class="bg-futbol hover:bg-futbolLight text-white font-bold px-6 py-2.5 rounded-lg transition">
+
+                <!-- Tabs de búsqueda -->
+                <div class="grid grid-cols-3 gap-1 bg-gray-100 rounded-lg p-1 mb-4 min-w-0">
+                    <button type="button" id="tabCedula" onclick="cambiarTabConsulta('cedula')" 
+                            class="min-w-0 py-2 text-[11px] sm:text-sm font-semibold rounded-md transition bg-white text-gray-900 shadow-sm text-center">
+                        Por Cédula
+                    </button>
+                    <button type="button" id="tabBoleto" onclick="cambiarTabConsulta('boleto')" 
+                            class="min-w-0 py-2 text-[11px] sm:text-sm font-semibold rounded-md transition text-gray-500 hover:text-gray-700 text-center">
+                        Por Boleto
+                    </button>
+                    <button type="button" id="tabFactura" onclick="cambiarTabConsulta('factura')" 
+                            class="min-w-0 py-2 text-[11px] sm:text-sm font-semibold rounded-md transition text-gray-500 hover:text-gray-700 text-center">
+                        Por Factura
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="consultaInput" placeholder="Ingresa tu cédula" 
+                           class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-futbol focus:border-futbol outline-none transition">
+                    <button onclick="consultarBoletos()" class="bg-futbol hover:bg-futbolLight text-white font-bold px-6 py-2.5 rounded-lg transition whitespace-nowrap">
                         Consultar
                     </button>
                 </div>

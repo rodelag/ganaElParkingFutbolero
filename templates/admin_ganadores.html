@@ -7,15 +7,32 @@
     <div class="bg-rodelagDark text-white">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-6">
-                    <span class="font-bold text-lg">Admin Panel</span>
+                <span class="font-bold text-lg">Admin Panel</span>
+
+                <!-- Desktop links -->
+                <div class="hidden md:flex items-center space-x-6">
                     <a href="/admin/dashboard" class="text-sm hover:text-gold transition">Dashboard</a>
                     <a href="/admin/facturas" class="text-sm hover:text-gold transition">Facturas</a>
                     <a href="/admin/ganadores" class="text-sm bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition">Ganadores</a>
                     <a href="/admin/sorteo?sorteo=1" class="text-sm hover:text-gold transition">Sorteo 1</a>
                     <a href="/admin/sorteo?sorteo=2" class="text-sm hover:text-gold transition">Sorteo 2</a>
+                    <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
                 </div>
-                <a href="/admin/logout" class="text-sm text-red-300 hover:text-red-200 transition">Cerrar Sesión</a>
+
+                <!-- Mobile hamburger -->
+                <button onclick="toggleAdminMenu()" class="md:hidden text-white focus:outline-none p-2">
+                    <svg id="adminMenuIcon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+
+            <!-- Mobile menu -->
+            <div id="adminMobileMenu" class="hidden md:hidden pb-4 space-y-2">
+                <a href="/admin/dashboard" class="block text-sm px-3 py-2 hover:text-gold transition">Dashboard</a>
+                <a href="/admin/facturas" class="block text-sm px-3 py-2 hover:text-gold transition">Facturas</a>
+                <a href="/admin/ganadores" class="block text-sm bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20 transition">Ganadores</a>
+                <a href="/admin/sorteo?sorteo=1" class="block text-sm px-3 py-2 hover:text-gold transition">Sorteo 1</a>
+                <a href="/admin/sorteo?sorteo=2" class="block text-sm px-3 py-2 hover:text-gold transition">Sorteo 2</a>
+                <a href="/admin/logout" class="block text-sm text-red-300 hover:text-red-200 px-3 py-2 transition">Cerrar Sesión</a>
             </div>
         </div>
     </div>
@@ -27,13 +44,17 @@
                     <h1 class="text-xl font-bold text-gray-900">Ganadores</h1>
                     <p class="text-sm text-gray-500">Listado de ganadores de la promoción</p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-col sm:flex-row gap-3">
                     <select onchange="window.location.href = '?sorteo=' + this.value" class="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-rodelag outline-none">
                         <option value="">Todos los sorteos</option>
                         {% for id, s in sorteos.items() %}
                         <option value="{{ id }}" {% if request.args.get('sorteo')|int == id %}selected{% endif %}>{{ s.nombre }}</option>
                         {% endfor %}
                     </select>
+                    <a href="/api/admin/exportar-ganadores{% if request.args.get('sorteo') %}?sorteo={{ request.args.get('sorteo') }}{% endif %}" 
+                       class="bg-futbol hover:bg-futbolLight text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-md shadow-futbol/20 text-center">
+                        Exportar CSV
+                    </a>
                 </div>
             </div>
 
@@ -69,7 +90,7 @@
                             </td>
                             <td class="px-6 py-4 text-gray-700 font-medium">{{ g.partido }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ g.fecha_fiesta }}</td>
-                            <td class="px-6 py-4 text-gray-600">{{ g.fecha_sorteo[:10] }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ g.fecha_sorteo.strftime('%Y-%m-%d') if g.fecha_sorteo else '—' }}</td>
                         </tr>
                         {% else %}
                         <tr>
@@ -82,4 +103,11 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleAdminMenu() {
+    const menu = document.getElementById('adminMobileMenu');
+    menu.classList.toggle('hidden');
+}
+</script>
 {% endblock %}
