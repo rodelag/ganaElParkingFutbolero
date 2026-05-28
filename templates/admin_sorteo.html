@@ -57,7 +57,7 @@
                     <div>
                         <h3 class="font-bold text-gray-900 text-lg">{{ premio.tv }}</h3>
                         <p class="text-sm text-gray-500">{{ premio.partido }} - {{ premio.fecha_fiesta }}</p>
-                        <p class="text-xs text-rodelag font-semibold mt-1">Marca: {{ premio.marca }} | Valor: B/. {{ "%.2f"|format(premio.valor) }}</p>
+                        <p class="text-xs text-rodelag font-semibold mt-1">Marca: {{ premio.marca }} | Valor: B/. {{ "{:,.2f}".format(premio.valor) }}</p>
                     </div>
                 </div>
                 <button onclick="realizarSorteo({{ sorteo_id }}, {{ premio.id }})" class="bg-futbol hover:bg-futbolLight text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-futbol/20 transition transform hover:scale-105 active:scale-95">

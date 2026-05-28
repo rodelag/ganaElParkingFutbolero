@@ -56,11 +56,11 @@
        <!-- Stats Cards -->
 <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
-        <div class="text-sm text-gray-500 font-medium">Clientes Elegibles</div>
-        <div class="text-3xl font-black text-blue-600 mt-1">{{ stats.total_clientes_rodelag_elegibles | miles }}</div>
-                <div class="text-xs text-gray-400 mt-1">
-            {% if stats.total_clientes_rodelag_elegibles and stats.total_clientes_rodelag_elegibles != '—' and stats.total_clientes_rodelag_elegibles > 0 %}
-                Porcentaje: {{ "%.1f"|format(stats.total_participantes / stats.total_clientes_rodelag_elegibles * 100) }}%
+        <div class="text-sm text-gray-500 font-medium">Facturas Elegibles</div>
+        <div class="text-3xl font-black text-blue-600 mt-1">{{ stats.total_facturas_rodelag_elegibles  | miles }}</div>
+                <div class="text-base text-slate-500 mt-1">
+            {% if stats.total_facturas_rodelag_elegibles  and stats.total_facturas_rodelag_elegibles  != '—' and stats.total_clientes_rodelag_elegibles > 0 %}
+                Porcentaje: {{ "%.1f"|format(stats.total_participantes / stats.total_facturas_rodelag_elegibles  * 100) }}%
             {% else %}
                 Total en el sistema
             {% endif %}
@@ -68,19 +68,19 @@
     </div>
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
         <div class="text-sm text-gray-500 font-medium">Participantes</div>
-        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_participantes }}</div>
+        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_participantes | miles }}</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
         <div class="text-sm text-gray-500 font-medium">Facturas Registradas</div>
-        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_facturas }}</div>
+        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_facturas | miles }}</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
         <div class="text-sm text-gray-500 font-medium">Boletos Generados</div>
-        <div class="text-3xl font-black text-rodelag mt-1">{{ stats.total_boletos }}</div>
+        <div class="text-3xl font-black text-rodelag mt-1">{{ stats.total_boletos | miles }}</div>
     </div>
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
         <div class="text-sm text-gray-500 font-medium">Ganadores</div>
-        <div class="text-3xl font-black text-futbol mt-1">{{ stats.total_ganadores }}</div>
+        <div class="text-3xl font-black text-futbol mt-1">{{ stats.total_ganadores | miles }}</div>
     </div>
 </div>
 
@@ -88,8 +88,7 @@
             <!-- Monto total -->
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
                 <div class="text-sm text-gray-500 font-medium mb-1">Monto Total Facturado</div>
-                <div class="text-3xl font-black text-gray-900">B/. {{ "%.2f"|format(stats.monto_total) }}</div>
-                <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="text-3xl font-black text-gray-900">B/. {{ "{:,.2f}".format(stats.monto_total) }}</div>                <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div class="h-full bg-rodelag rounded-full" style="width: 100%"></div>
                 </div>
             </div>
