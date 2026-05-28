@@ -43,7 +43,7 @@ MULTIPLICADOR_CREDITO_UNA = 2
 EDAD_MINIMA = 18
 
 # Fechas de la promocion
-FECHA_INICIO = '2026-04-30'
+FECHA_INICIO = '2026-04-01'
 FECHA_FIN = '2026-06-30'
 
 # Premios y fechas de fiestas

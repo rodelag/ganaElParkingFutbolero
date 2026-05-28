@@ -177,6 +177,7 @@ def obtener_boleto_por_numero(numero_boleto):
     conn.close()
     return row
 
+
 def obtener_estadisticas():
     from src.config import MARCAS
     conn = get_connection()
@@ -279,6 +280,57 @@ def obtener_ganador_pendiente_por_premio(premio_id):
         JOIN {TABLE_BOLETOS} b ON g.boleto_id = b.id
         JOIN {TABLE_PARTICIPANTES} p ON g.participante_id = p.id
         JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+        WHERE g.premio_id = %s
+          AND g.confirmado = 0
+          AND pr.ganador_id IS NULL
+        ORDER BY g.id DESC
+        LIMIT 1
+    ''', (premio_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+
+def obtener_participantes_con_ganador_pendiente():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(f'''
+        SELECT DISTINCT g.participante_id
+        FROM {TABLE_GANADORES} g
+        JOIN {TABLE_PREMIOS} pr ON g.premio_id = pr.id
+        WHERE g.confirmado = 0
+          AND pr.ganador_id IS NULL
+    ''')
+    rows = cursor.fetchall()
+    conn.close()
+    return [row['participante_id'] for row in rows]
+
+
+def registrar_ganador_pendiente(participante_id, premio_id, sorteo_id, boleto_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    from datetime import datetime
+    fecha = datetime.now()
+    try:
+        cursor.execute(f'''
+            INSERT INTO {TABLE_GANADORES} (participante_id, premio_id, sorteo_id, boleto_id, fecha_sorteo, confirmado)
+            VALUES (%s, %s, %s, %s, %s, 0)
+        ''', (participante_id, premio_id, sorteo_id, boleto_id, fecha))
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def obtener_ganador_pendiente_por_premio(premio_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(f'''
+        SELECT g.*, b.numero_boleto, p.nombre, p.cedula, p.telefono, p.email
+        FROM {TABLE_GANADORES} g
+        JOIN {TABLE_PREMIOS} pr ON g.premio_id = pr.id
+        JOIN {TABLE_BOLETOS} b ON g.boleto_id = b.id
+        JOIN {TABLE_PARTICIPANTES} p ON g.participante_id = p.id
         WHERE g.premio_id = %s
           AND g.confirmado = 0
           AND pr.ganador_id IS NULL
