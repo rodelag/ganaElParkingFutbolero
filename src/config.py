@@ -28,7 +28,7 @@ SMTP_FROM = os.getenv('SMTP_FROM', 'alerta.ventas@rodelag.com')
 
 # Modo de pruebas de correos: si True, todos los correos van a EMAIL_PRUEBAS
 MODO_PRUEBAS_EMAIL = True
-EMAIL_PRUEBAS = 'noel.santamaria@rodelag.com'
+EMAIL_PRUEBAS = 'tecnologia@rodelag.com'
 
 # Marcas participantes
 MARCAS = ['LG', 'Sankey', 'Mystic', 'RCA', 'Hisense', 'Samsung']
@@ -43,7 +43,7 @@ MULTIPLICADOR_CREDITO_UNA = 2
 EDAD_MINIMA = 18
 
 # Fechas de la promocion
-FECHA_INICIO = '2026-04-01'
+FECHA_INICIO = '2026-04-30'
 FECHA_FIN = '2026-06-30'
 
 # Premios y fechas de fiestas

@@ -14,7 +14,9 @@ def get_rodelag_connection():
         cursorclass=DictCursor,
         connect_timeout=10,
         read_timeout=10,
-        write_timeout=10
+        write_timeout=10,
+        charset='utf8mb4', 
+        use_unicode=True
     )
 
 
@@ -29,7 +31,9 @@ def get_dev_connection():
         cursorclass=DictCursor,
         connect_timeout=10,
         read_timeout=10,
-        write_timeout=10
+        write_timeout=10,
+        charset='utf8mb4', 
+        use_unicode=True
     )
 
 

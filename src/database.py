@@ -177,8 +177,8 @@ def obtener_boleto_por_numero(numero_boleto):
     conn.close()
     return row
 
-
 def obtener_estadisticas():
+    from src.config import MARCAS
     conn = get_connection()
     cursor = conn.cursor()
     stats = {}
@@ -203,7 +203,20 @@ def obtener_estadisticas():
     cursor.execute(f'SELECT SUM(monto) as total FROM {TABLE_FACTURAS} WHERE estado = "activa"')
     row = cursor.fetchone()
     stats['monto_total'] = float(row['total'] or 0)
-    
+
+    marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+    cursor.execute(f'''
+        SELECT COUNT(DISTINCT b.participante_id) as total
+        FROM {TABLE_BOLETOS} b
+        JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+        JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+        WHERE b.asignado_en_sorteo = 0
+          AND p.es_ganador = 0
+          AND f.estado = "activa"
+          AND f.marca IN ({marcas_placeholder})
+    ''', tuple(MARCAS))
+    stats['total_participantes_elegibles'] = cursor.fetchone()['total']
+
     conn.close()
     return stats
 
@@ -221,16 +234,35 @@ def obtener_premios_disponibles(sorteo_id):
     return rows
 
 
-def obtener_boletos_para_sorteo():
+def obtener_boletos_para_sorteo(marca=None):
+    from src.config import MARCAS
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(f'''
-        SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador
-        FROM {TABLE_BOLETOS} b
-        JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
-        WHERE b.asignado_en_sorteo = 0 AND p.es_ganador = 0
-        ORDER BY RAND()
-    ''')
+    if marca:
+        cursor.execute(f'''
+            SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador,
+                   f.numero_factura, f.marca
+            FROM {TABLE_BOLETOS} b
+            JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+            JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+            WHERE b.asignado_en_sorteo = 0
+              AND p.es_ganador = 0
+              AND f.estado = 'activa'
+              AND f.marca = %s
+        ''', (marca,))
+    else:
+        marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+        cursor.execute(f'''
+            SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador,
+                   f.numero_factura, f.marca
+            FROM {TABLE_BOLETOS} b
+            JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+            JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+            WHERE b.asignado_en_sorteo = 0
+              AND p.es_ganador = 0
+              AND f.estado = 'activa'
+              AND f.marca IN ({marcas_placeholder})
+        ''', tuple(MARCAS))
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -240,11 +272,13 @@ def obtener_ganador_pendiente_por_premio(premio_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(f'''
-        SELECT g.*, b.numero_boleto, p.nombre, p.cedula, p.telefono, p.email
+        SELECT g.*, b.numero_boleto, p.nombre, p.cedula, p.telefono, p.email,
+               f.numero_factura, f.marca
         FROM {TABLE_GANADORES} g
         JOIN {TABLE_PREMIOS} pr ON g.premio_id = pr.id
         JOIN {TABLE_BOLETOS} b ON g.boleto_id = b.id
         JOIN {TABLE_PARTICIPANTES} p ON g.participante_id = p.id
+        JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
         WHERE g.premio_id = %s
           AND g.confirmado = 0
           AND pr.ganador_id IS NULL

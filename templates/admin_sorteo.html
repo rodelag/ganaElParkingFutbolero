@@ -155,6 +155,16 @@ async function realizarSorteo(sorteoId, premioId, pedirConfirmacion = true) {
                         <div class="text-gray-500">Boleto</div>
                         <div class="font-mono font-bold text-rodelag">${data.ganador.boleto}</div>
                     </div>
+                                        
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Factura</div>
+                        <div class="font-semibold break-all">${data.ganador.factura}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Marca</div>
+                        <div class="font-mono font-bold text-rodelag">${data.ganador.marca}</div>
+                    </div>
+
                 </div>
             `;
             document.getElementById('resultadoSorteo').classList.remove('hidden');

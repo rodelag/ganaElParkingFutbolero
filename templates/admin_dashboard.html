@@ -48,30 +48,41 @@
             <span class="text-2xl">⚠️</span>
             <div>
                 <p class="font-bold text-yellow-800">MODO DE PRUEBAS — Envío de Correos</p>
-                <p class="text-sm text-yellow-700">Los correos de confirmación se envían a <strong>noel.santamaria@rodelag.com</strong> en lugar de los clientes.</p>
+                <p class="text-sm text-yellow-700">Los correos de confirmación se envían a <strong> tecnologia@rodelag.com </strong> en lugar de los clientes.</p>
             </div>
         </div>
         {% endif %}
 
-        <!-- Stats Cards -->
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
-                <div class="text-sm text-gray-500 font-medium">Participantes</div>
-                <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_participantes }}</div>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
-                <div class="text-sm text-gray-500 font-medium">Facturas Registradas</div>
-                <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_facturas }}</div>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
-                <div class="text-sm text-gray-500 font-medium">Boletos Generados</div>
-                <div class="text-3xl font-black text-rodelag mt-1">{{ stats.total_boletos }}</div>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
-                <div class="text-sm text-gray-500 font-medium">Ganadores</div>
-                <div class="text-3xl font-black text-futbol mt-1">{{ stats.total_ganadores }}</div>
-            </div>
+       <!-- Stats Cards -->
+<div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+        <div class="text-sm text-gray-500 font-medium">Clientes Elegibles</div>
+        <div class="text-3xl font-black text-blue-600 mt-1">{{ stats.total_clientes_rodelag_elegibles | miles }}</div>
+                <div class="text-xs text-gray-400 mt-1">
+            {% if stats.total_clientes_rodelag_elegibles and stats.total_clientes_rodelag_elegibles != '—' and stats.total_clientes_rodelag_elegibles > 0 %}
+                Porcentaje: {{ "%.1f"|format(stats.total_participantes / stats.total_clientes_rodelag_elegibles * 100) }}%
+            {% else %}
+                Total en el sistema
+            {% endif %}
         </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+        <div class="text-sm text-gray-500 font-medium">Participantes</div>
+        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_participantes }}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+        <div class="text-sm text-gray-500 font-medium">Facturas Registradas</div>
+        <div class="text-3xl font-black text-gray-900 mt-1">{{ stats.total_facturas }}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+        <div class="text-sm text-gray-500 font-medium">Boletos Generados</div>
+        <div class="text-3xl font-black text-rodelag mt-1">{{ stats.total_boletos }}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 card-shine">
+        <div class="text-sm text-gray-500 font-medium">Ganadores</div>
+        <div class="text-3xl font-black text-futbol mt-1">{{ stats.total_ganadores }}</div>
+    </div>
+</div>
 
         <div class="grid lg:grid-cols-3 gap-8">
             <!-- Monto total -->
@@ -126,7 +137,7 @@
                     <p class="font-semibold text-gray-800">Modo de pruebas de correos</p>
                     <p class="text-sm text-gray-500">
                         Cuando está activo, los correos de confirmación se envían a 
-                        <strong>noel.santamaria@rodelag.com</strong> en lugar de los clientes.
+                        <strong> tecnologia@rodelag.com </strong> en lugar de los clientes.
                     </p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0">

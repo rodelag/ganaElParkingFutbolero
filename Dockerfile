@@ -7,7 +7,14 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     curl \
+    locales \
+    && locale-gen es_PA.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=es_PA.UTF-8
+ENV LANGUAGE=es_PA:es
+ENV LC_ALL=es_PA.UTF-8
+ENV PYTHONIOENCODING=utf-8
 
 # Crear directorio de trabajo
 WORKDIR /app

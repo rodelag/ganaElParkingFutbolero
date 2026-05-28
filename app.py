@@ -33,7 +33,19 @@ from src.email_service import enviar_correo_confirmacion
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.config['JSON_AS_ASCII'] = False
+@app.template_filter('miles')
+def miles_filter(value):
+    try:
+        return "{:,}".format(int(value))
+    except:
+        return value
 
+@app.after_request
+def add_charset(response):
+    if response.content_type.startswith('text/html'):
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 def login_required(f):
     @wraps(f)
@@ -130,7 +142,9 @@ def _serializar_candidato(ganador):
         'cedula': ganador['cedula'],
         'telefono': ganador['telefono'],
         'email': ganador.get('email') or '',
-        'boleto': ganador['numero_boleto']
+        'boleto': ganador['numero_boleto'],
+        'factura': ganador.get('numero_factura') or '—',
+        'marca': ganador.get('marca') or '—'
     }
 
 
@@ -378,8 +392,36 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    init_config_table()  # Asegurar que la tabla y valor default existan
+    init_config_table()
     stats = obtener_estadisticas()
+    try:
+        from src.mysql_db import get_rodelag_connection
+        conn_prod = get_rodelag_connection()
+        cursor_prod = conn_prod.cursor()
+        marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+        cursor_prod.execute(f'''
+            SELECT 
+                COUNT(*) AS total_facturas_elegibles,
+                COUNT(DISTINCT Cliente) AS total_clientes_elegibles
+            FROM (
+                SELECT b.id, b.Cliente
+                FROM bills b
+                JOIN bills_details bd ON bd.Bill = b.id
+                JOIN products p ON p.id = bd.Codigo
+                WHERE b.Status NOT IN ('ABORTED', 'MIGRATED')
+                  AND b.Date BETWEEN %s AND %s
+                  AND p.Marca IN ({marcas_placeholder})
+                GROUP BY b.id, b.Cliente
+                HAVING SUM(bd.Precio_Unitario * bd.Unidades) >= 100
+            ) AS elegibles
+        ''', (FECHA_INICIO, FECHA_FIN, *MARCAS))
+        row = cursor_prod.fetchone()
+        stats['total_facturas_rodelag_elegibles'] = row['total_facturas_elegibles'] if row else 0
+        stats['total_clientes_rodelag_elegibles'] = row['total_clientes_elegibles'] if row else 0
+        conn_prod.close()
+    except Exception as e:
+        stats['total_facturas_rodelag_elegibles'] = '—'
+        stats['total_clientes_rodelag_elegibles'] = '—'
     modo_pruebas = obtener_config('modo_pruebas_email', '1') == '1'
     return render_template('admin_dashboard.html', stats=stats, sorteos=SORTEOS, modo_pruebas_email=modo_pruebas)
 
@@ -471,8 +513,7 @@ def api_realizar_sorteo():
             'message': 'Ya hay un candidato pendiente de confirmar para este premio.',
             'ganador': _serializar_candidato(ganador_pendiente)
         })
-
-    boletos = obtener_boletos_para_sorteo()
+    boletos = obtener_boletos_para_sorteo(marca=premio.get('marca'))
     if not boletos:
         return jsonify({'success': False, 'message': 'No hay boletos disponibles para el sorteo'}), 400
 
