@@ -28,7 +28,7 @@ SMTP_FROM = os.getenv('SMTP_FROM', 'alerta.ventas@rodelag.com')
 
 # Modo de pruebas de correos: si True, todos los correos van a EMAIL_PRUEBAS
 MODO_PRUEBAS_EMAIL = True
-EMAIL_PRUEBAS = 'noel.santamaria@rodelag.com'
+EMAIL_PRUEBAS = 'tecnologia@rodelag.com'
 
 # Marcas participantes
 MARCAS = ['LG', 'Sankey', 'Mystic', 'RCA', 'Hisense', 'Samsung']

@@ -57,7 +57,7 @@
                     <div>
                         <h3 class="font-bold text-gray-900 text-lg">{{ premio.tv }}</h3>
                         <p class="text-sm text-gray-500">{{ premio.partido }} - {{ premio.fecha_fiesta }}</p>
-                        <p class="text-xs text-rodelag font-semibold mt-1">Marca: {{ premio.marca }} | Valor: B/. {{ "%.2f"|format(premio.valor) }}</p>
+                        <p class="text-xs text-rodelag font-semibold mt-1">Marca: {{ premio.marca }} | Valor: B/. {{ "{:,.2f}".format(premio.valor) }}</p>
                     </div>
                 </div>
                 <button onclick="realizarSorteo({{ sorteo_id }}, {{ premio.id }})" class="bg-futbol hover:bg-futbolLight text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-futbol/20 transition transform hover:scale-105 active:scale-95">
@@ -121,10 +121,10 @@ async function realizarSorteo(sorteoId, premioId, pedirConfirmacion = true) {
 
         if (!confirmado) return;
     }
-    
+
     btn.disabled = true;
     btn.textContent = yaHayCandidato ? 'Cargando...' : 'Sorteando...';
-    
+
     try {
         const res = await fetch('/api/admin/realizar-sorteo', {
             method: 'POST',
@@ -132,7 +132,7 @@ async function realizarSorteo(sorteoId, premioId, pedirConfirmacion = true) {
             body: JSON.stringify({sorteo_id: sorteoId, premio_id: premioId})
         });
         const data = await res.json();
-        
+
         if (data.success) {
             candidatoPendiente = data.ganador;
             premioPendienteId = premioId;
@@ -155,6 +155,16 @@ async function realizarSorteo(sorteoId, premioId, pedirConfirmacion = true) {
                         <div class="text-gray-500">Boleto</div>
                         <div class="font-mono font-bold text-rodelag">${data.ganador.boleto}</div>
                     </div>
+
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Factura</div>
+                        <div class="font-semibold break-all">${data.ganador.factura}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <div class="text-gray-500">Marca</div>
+                        <div class="font-mono font-bold text-rodelag">${data.ganador.marca}</div>
+                    </div>
+
                 </div>
             `;
             document.getElementById('resultadoSorteo').classList.remove('hidden');

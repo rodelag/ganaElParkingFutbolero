@@ -33,7 +33,43 @@ from src.email_service import enviar_correo_confirmacion
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.json.ensure_ascii = False
 
+
+@app.template_filter('miles')
+def miles_filter(value):
+    """Filtro Jinja2 que formatea un entero con separador de miles (ej. 1234 -> "1,234").
+
+    Args:
+        value: Valor a formatear. Se intenta convertir a int.
+
+    Returns:
+        str: El número formateado con comas como separador de miles. Si el valor
+            no es numérico (ValueError/TypeError), se devuelve sin cambios, lo que
+            permite mostrar marcadores como '—' sin romper la plantilla.
+    """
+    try:
+        return "{:,}".format(int(value))
+    except (ValueError, TypeError):
+        return value
+
+@app.after_request
+def add_charset(response):
+    """Hook after_request que fuerza charset=utf-8 en las respuestas HTML.
+
+    Garantiza que los acentos y caracteres especiales en español se rendericen
+    correctamente en el navegador.
+
+    Args:
+        response: Respuesta saliente de Flask.
+
+    Returns:
+        La misma respuesta; si su Content-Type es text/html se reescribe con
+        charset=utf-8.
+    """
+    if response.content_type.startswith('text/html'):
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 def login_required(f):
     @wraps(f)
@@ -123,6 +159,19 @@ def _limpiar_rechazados_premio(premio_id):
 
 
 def _serializar_candidato(ganador):
+    """Convierte una fila de candidato a ganador en un dict listo para JSON.
+
+    Normaliza los campos que se envían al frontend del sorteo. Los datos de
+    factura y marca usan '—' como valor por defecto cuando no están presentes.
+
+    Args:
+        ganador (dict): Fila obtenida de la BD (p. ej. de
+            obtener_ganador_pendiente_por_premio) con datos del participante y boleto.
+
+    Returns:
+        dict: Datos serializados (id, participante_id, nombre, cedula, telefono,
+            email, boleto, factura y marca).
+    """
     return {
         'id': ganador['id'],
         'participante_id': ganador['participante_id'],
@@ -130,7 +179,9 @@ def _serializar_candidato(ganador):
         'cedula': ganador['cedula'],
         'telefono': ganador['telefono'],
         'email': ganador.get('email') or '',
-        'boleto': ganador['numero_boleto']
+        'boleto': ganador['numero_boleto'],
+        'factura': ganador.get('numero_factura') or '—',
+        'marca': ganador.get('marca') or '—'
     }
 
 
@@ -378,8 +429,54 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    init_config_table()  # Asegurar que la tabla y valor default existan
+    """Renderiza el dashboard administrativo con estadísticas de la promoción.
+
+    Combina las métricas internas (obtener_estadisticas) con indicadores de
+    elegibilidad consultados en la BD de producción de Rodelag: total de facturas
+    y de clientes cuyas compras de marcas participantes, dentro del período de la
+    promoción, alcanzan el mínimo de B/.100.
+
+    La consulta a producción se hace con manejo seguro de errores: si falla, los
+    indicadores se muestran como '—', se registra un warning y el dashboard no se
+    rompe. La conexión se cierra siempre en el bloque finally.
+
+    Returns:
+        Respuesta HTML con la plantilla admin_dashboard.html.
+    """
+    init_config_table()
     stats = obtener_estadisticas()
+    conn_prod = None
+    try:
+        from src.mysql_db import get_rodelag_connection
+        conn_prod = get_rodelag_connection()
+        cursor_prod = conn_prod.cursor()
+        marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+        cursor_prod.execute(f'''
+            SELECT 
+                COUNT(*) AS total_facturas_elegibles,
+                COUNT(DISTINCT Cliente) AS total_clientes_elegibles
+            FROM (
+                SELECT b.id, b.Cliente
+                FROM bills b
+                JOIN bills_details bd ON bd.Bill = b.id
+                JOIN products p ON p.id = bd.Codigo
+                WHERE b.Status NOT IN ('ABORTED', 'MIGRATED')
+                  AND b.Date BETWEEN %s AND %s
+                  AND p.Marca IN ({marcas_placeholder})
+                GROUP BY b.id, b.Cliente
+                HAVING SUM(bd.Precio_Unitario * bd.Unidades) >= 100
+            ) AS elegibles
+        ''', (FECHA_INICIO, FECHA_FIN, *MARCAS))
+        row = cursor_prod.fetchone()
+        stats['total_facturas_rodelag_elegibles'] = row['total_facturas_elegibles'] if row else 0
+        stats['total_clientes_rodelag_elegibles'] = row['total_clientes_elegibles'] if row else 0
+    except Exception as e:
+        app.logger.warning(f'No se pudieron obtener los elegibles de Rodelag: {e}')
+        stats['total_facturas_rodelag_elegibles'] = '—'
+        stats['total_clientes_rodelag_elegibles'] = '—'
+    finally:
+        if conn_prod is not None:
+            conn_prod.close()
     modo_pruebas = obtener_config('modo_pruebas_email', '1') == '1'
     return render_template('admin_dashboard.html', stats=stats, sorteos=SORTEOS, modo_pruebas_email=modo_pruebas)
 
@@ -471,8 +568,7 @@ def api_realizar_sorteo():
             'message': 'Ya hay un candidato pendiente de confirmar para este premio.',
             'ganador': _serializar_candidato(ganador_pendiente)
         })
-
-    boletos = obtener_boletos_para_sorteo()
+    boletos = obtener_boletos_para_sorteo(marca=premio.get('marca'))
     if not boletos:
         return jsonify({'success': False, 'message': 'No hay boletos disponibles para el sorteo'}), 400
 

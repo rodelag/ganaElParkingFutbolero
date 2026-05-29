@@ -1,0 +1,3 @@
+# Dependencias solo para desarrollo y pruebas (no necesarias en produccion)
+# Instalar con: .venv/bin/python -m pip install -r requirements-dev.txt
+pytest==8.4.2

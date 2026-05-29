@@ -4,7 +4,11 @@ from src.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_NAME_
 
 
 def get_rodelag_connection():
-    """Conexión a la base de datos de producción de Rodelag (solo lectura para validaciones)"""
+    """Conexión a la base de datos de producción de Rodelag (solo lectura para validaciones).
+
+    Usa charset utf8mb4 con use_unicode para preservar acentos y caracteres
+    especiales en español al leer nombres, descripciones y demás textos.
+    """
     return pymysql.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -14,12 +18,18 @@ def get_rodelag_connection():
         cursorclass=DictCursor,
         connect_timeout=10,
         read_timeout=10,
-        write_timeout=10
+        write_timeout=10,
+        charset='utf8mb4',
+        use_unicode=True
     )
 
 
 def get_dev_connection():
-    """Conexión a la base de datos de desarrollo (lectura/escritura para la promoción)"""
+    """Conexión a la base de datos de desarrollo (lectura/escritura para la promoción).
+
+    Usa charset utf8mb4 con use_unicode para almacenar y leer correctamente
+    acentos y caracteres especiales en español.
+    """
     return pymysql.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -29,7 +39,9 @@ def get_dev_connection():
         cursorclass=DictCursor,
         connect_timeout=10,
         read_timeout=10,
-        write_timeout=10
+        write_timeout=10,
+        charset='utf8mb4',
+        use_unicode=True
     )
 
 

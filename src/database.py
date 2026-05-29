@@ -179,6 +179,20 @@ def obtener_boleto_por_numero(numero_boleto):
 
 
 def obtener_estadisticas():
+    """Calcula las métricas agregadas que se muestran en el dashboard administrativo.
+
+    Returns:
+        dict: Diccionario con las claves:
+            - total_participantes (int): participantes registrados.
+            - total_facturas (int): facturas registradas.
+            - total_boletos (int): boletos generados.
+            - total_ganadores (int): ganadores confirmados o ya asignados a un premio.
+            - monto_total (float): suma de montos de las facturas activas.
+            - total_participantes_elegibles (int): participantes con boletos aún
+              disponibles para sorteo (no asignados, no ganadores) cuya factura
+              está activa y pertenece a una de las MARCAS participantes.
+    """
+    from src.config import MARCAS
     conn = get_connection()
     cursor = conn.cursor()
     stats = {}
@@ -203,7 +217,20 @@ def obtener_estadisticas():
     cursor.execute(f'SELECT SUM(monto) as total FROM {TABLE_FACTURAS} WHERE estado = "activa"')
     row = cursor.fetchone()
     stats['monto_total'] = float(row['total'] or 0)
-    
+
+    marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+    cursor.execute(f'''
+        SELECT COUNT(DISTINCT b.participante_id) as total
+        FROM {TABLE_BOLETOS} b
+        JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+        JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+        WHERE b.asignado_en_sorteo = 0
+          AND p.es_ganador = 0
+          AND f.estado = "activa"
+          AND f.marca IN ({marcas_placeholder})
+    ''', tuple(MARCAS))
+    stats['total_participantes_elegibles'] = cursor.fetchone()['total']
+
     conn.close()
     return stats
 
@@ -221,30 +248,80 @@ def obtener_premios_disponibles(sorteo_id):
     return rows
 
 
-def obtener_boletos_para_sorteo():
+def obtener_boletos_para_sorteo(marca=None):
+    """Obtiene los boletos elegibles para participar en un sorteo.
+
+    Devuelve los boletos que no han sido asignados en un sorteo previo y cuyo
+    participante no es ya ganador, asociados a facturas activas. El resultado se
+    entrega sin ordenar; la selección aleatoria del ganador se realiza en la capa
+    de la aplicación (app.py) mediante random.choice.
+
+    Args:
+        marca (str, optional): Marca por la que filtrar los boletos (la del premio
+            a sortear). Si es None, se incluyen todas las MARCAS participantes.
+
+    Returns:
+        list[dict]: Filas de boletos con los datos del participante (nombre,
+            cedula, telefono, email, es_ganador) y, mediante JOIN a facturas,
+            el numero_factura y la marca asociados.
+    """
+    from src.config import MARCAS
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(f'''
-        SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador
-        FROM {TABLE_BOLETOS} b
-        JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
-        WHERE b.asignado_en_sorteo = 0 AND p.es_ganador = 0
-        ORDER BY RAND()
-    ''')
+    if marca:
+        cursor.execute(f'''
+            SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador,
+                   f.numero_factura, f.marca
+            FROM {TABLE_BOLETOS} b
+            JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+            JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+            WHERE b.asignado_en_sorteo = 0
+              AND p.es_ganador = 0
+              AND f.estado = 'activa'
+              AND f.marca = %s
+        ''', (marca,))
+    else:
+        marcas_placeholder = ', '.join(['%s'] * len(MARCAS))
+        cursor.execute(f'''
+            SELECT b.*, p.nombre, p.cedula, p.telefono, p.email, p.es_ganador,
+                   f.numero_factura, f.marca
+            FROM {TABLE_BOLETOS} b
+            JOIN {TABLE_PARTICIPANTES} p ON b.participante_id = p.id
+            JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
+            WHERE b.asignado_en_sorteo = 0
+              AND p.es_ganador = 0
+              AND f.estado = 'activa'
+              AND f.marca IN ({marcas_placeholder})
+        ''', tuple(MARCAS))
     rows = cursor.fetchall()
     conn.close()
     return rows
 
 
 def obtener_ganador_pendiente_por_premio(premio_id):
+    """Devuelve el candidato a ganador pendiente de confirmar para un premio.
+
+    Un candidato está pendiente cuando su registro de ganador aún no fue
+    confirmado y el premio todavía no tiene ganador asignado.
+
+    Args:
+        premio_id: Identificador del premio.
+
+    Returns:
+        dict | None: Datos del candidato (incluye numero_boleto, nombre, cedula,
+            telefono, email y, vía JOIN a facturas, numero_factura y marca para
+            mostrarlos en el modal del sorteo), o None si no hay candidato pendiente.
+    """
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(f'''
-        SELECT g.*, b.numero_boleto, p.nombre, p.cedula, p.telefono, p.email
+        SELECT g.*, b.numero_boleto, p.nombre, p.cedula, p.telefono, p.email,
+               f.numero_factura, f.marca
         FROM {TABLE_GANADORES} g
         JOIN {TABLE_PREMIOS} pr ON g.premio_id = pr.id
         JOIN {TABLE_BOLETOS} b ON g.boleto_id = b.id
         JOIN {TABLE_PARTICIPANTES} p ON g.participante_id = p.id
+        JOIN {TABLE_FACTURAS} f ON b.factura_id = f.id
         WHERE g.premio_id = %s
           AND g.confirmado = 0
           AND pr.ganador_id IS NULL
