@@ -57,3 +57,6 @@ backup/
 
 # Git
 .git/
+
+*.zip
+ganaElParkingFutbolero.zip
